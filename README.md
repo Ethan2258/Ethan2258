@@ -13,3 +13,9 @@
 ### 📌 Current
 - Testing Android system behaviors
 - Exploring LSPosed & Xposed ecosystem
+
+## 2026-01-12 Notes
+
+- Continued testing on Android 14
+- Observed that some system connections prefer short-lived HTTPS over long-lived sockets
+- Need more tests under different network conditions
