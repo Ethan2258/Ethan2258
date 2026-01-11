@@ -1,16 +1,15 @@
-## Hi there 👋
+## 👋 Hi, I'm Ethan
 
-<!--
-**Ethan2258/Ethan2258** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+- Interested in Android / Magisk / LSPosed / Network
+- Focus on Android system & proxy configuration
+- Learning open-source Android projects
 
-Here are some ideas to get you started:
+### 🔧 Tech
+- Android / Magisk
+- LSPosed Modules
+- Shell / Linux
+- Network (IPv4 / IPv6)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+### 📌 Current
+- Testing Android system behaviors
+- Exploring LSPosed & Xposed ecosystem
