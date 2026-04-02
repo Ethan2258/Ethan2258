@@ -88,15 +88,9 @@ proxy-providers:
     path: ./proxy_provider/MESL.yaml
     url: "https://em.mesl.cloud/ems/get?token=d9e18a7d93d85b0e6c4dce2c589dabd5"       
   4.自建落地:
-    type: file
+    <<: *p
     path: ./proxy_provider/自建落地.txt
-    health-check:
-      enable: true
-      url: "https://www.gstatic.com/generate_204"
-      interval: 300
-    override:
-      additional-prefix: "自建："
-      udp: true
+    url: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/%E8%87%AA%E5%BB%BA%E8%90%BD%E5%9C%B0.txt"
 profile: 
   store-selected: true
   store-fake-ip: true
