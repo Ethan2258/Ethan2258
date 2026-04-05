@@ -43,26 +43,27 @@ A: &A
   url: "https://www.gstatic.com/generate_204"
   interval: 300
   use:
-  - 1.花雲
-  - 2.WgetCloud
-  - 3.MESL
-  - 4.自建落地
+  - 花雲
+  - WgetCloud
+  - MESL
+  - 自建/拼车
 All: &All
   url: "https://www.gstatic.com/generate_204"
   interval: 300
   type: smart
+  strategy: sticky-sessions
   tolerance: 5
   uselightgbm: true
   collectdata: true
   sample-rate: 1
   prefer-asn: true
   use:
-  - 1.花雲
-  - 2.WgetCloud
-  - 3.MESL
-  - 4.自建落地
+  - 花雲
+  - WgetCloud
+  - MESL
+  - 自建/拼车
 proxy-providers: 
-  1.花雲: 
+  花雲: 
     <<: *p
     override:
       additional-prefix: "花雲："
@@ -70,7 +71,7 @@ proxy-providers:
     filter: "^(?!.*(Traffic|Expire)).*$"
     path: ./proxy_provider/花雲.yaml
     url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_Trojan.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-a94dd788eb0ifv8l8zfwjc"
-  2.WgetCloud:
+  WgetCloud:
     <<: *p
     override:
       additional-prefix: "WgetCloud："
@@ -79,7 +80,7 @@ proxy-providers:
     ip-version: ipv6-prefer
     path: ./proxy_provider/WgetCloud.yaml
     url: "https://bava8u2znaj6bdzzjnfb.wgetcloud.online/link/a48c1a53-6043-30f7-b563-eb92714dc215?target=clash"     
-  3.MESL:
+  MESL:
     <<: *p
     override:
       additional-prefix: "MESL："
@@ -87,12 +88,12 @@ proxy-providers:
     filter: "^(?=.*(家宽)).*$"
     path: ./proxy_provider/MESL.yaml
     url: "https://em.mesl.cloud/ems/get?token=d9e18a7d93d85b0e6c4dce2c589dabd5"       
-  4.自建落地:
+  自建/拼车:
     <<: *p
     override:
-      additional-prefix: "自建："
+      additional-prefix: "自建/拼车："
       udp: true
-    path: ./proxy_provider/自建落地.txt
+    path: ./proxy_provider/自建.txt
     url: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/%E8%87%AA%E5%BB%BA%E8%90%BD%E5%9C%B0.txt"
 profile: 
   store-selected: true
@@ -160,11 +161,12 @@ proxy_groups: &proxy_groups
     proxies:
       - 总模式
       - ALL·延迟最低
-      - ALL·香港地区  
+      - ALL·中国香港
       - ALL·中国台湾
       - ALL·日本地区
-      - ALL·自建落地
+      - ALL·自建/拼车
       - ALL·北美地区
+      - ALL·新加坡
       - ALL·其它地区
       - 🌐 本机·本地直连
     <<: *A
@@ -174,12 +176,12 @@ proxy-groups:
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Final_1.png"
     type: select
     proxies:
-      - ALL·延迟最低
-      - ALL·香港地区  
+      - ALL·中国香港
       - ALL·中国台湾
       - ALL·日本地区
-      - ALL·自建落地
+      - ALL·自建/拼车
       - ALL·北美地区
+      - ALL·新加坡
       - ALL·其它地区
       - 🌐 本机·本地直连
   - name: 订阅更新
@@ -205,24 +207,28 @@ proxy-groups:
     type: url-test
     tolerance: 2
     <<: *A
-  - name: ALL·日本地区
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Japan.png"
-    filter: "^(?=.*(日本)).*$"
+  - name: ALL·中国香港
+    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Hong_Kong.png"
+    filter: "^(?=.*港)(?!.*自建).*$"
     <<: *All
-  - name: ALL·自建落地
+  - name: ALL·自建/拼车
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Server.png"
     url: "https://www.gstatic.com/generate_204"
     interval: 300
     type: select 
     use:
-    - 4.自建落地
+    - 自建/拼车
   - name: ALL·中国台湾
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*(台)).*$"
+    filter: "^(?=.*台)(?!.*自建).*$"
     <<: *All
-  - name: ALL·香港地区
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(港)).*$"
+  - name: ALL·日本地区
+    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Japan.png"
+    filter: "^(?=.*日本)(?!.*自建).*$"
+    <<: *All
+  - name: ALL·新加坡
+    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Singapore.png"
+    filter: "^(?=.*(新加坡)).*$"
     <<: *All
   - name: ALL·北美地区
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/United_States.png"
@@ -230,7 +236,7 @@ proxy-groups:
     <<: *All
   - name: ALL·其它地区
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Global.png"
-    filter: "^(?!.*(港|日本|美|台|自建)).*$"
+    filter: "^(?!.*(港|日本|美|台|新加坡|自建)).*$"
     <<: *All
 # —————————
 rule-anchor:
@@ -322,7 +328,7 @@ rules:
   - DOMAIN-KEYWORD,claude,AI
   - RULE-SET,Google_域,Google
   - RULE-SET,Google_IP,Google,no-resolve
-  - RULE-SET,Private_域,⛔️ 禁止·拒绝连接
+  - RULE-SET,Private_域,🌐 本机·本地直连
   - RULE-SET,Private_IP,🌐 本机·本地直连,no-resolve
   - RULE-SET,CN_域,🌐 本机·本地直连
   - RULE-SET,CN_IP,🌐 本机·本地直连
