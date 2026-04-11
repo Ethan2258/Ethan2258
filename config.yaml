@@ -9,7 +9,7 @@ lgbm-update-interval: 72
 lgbm-url: "https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin"
 allow-lan: true
 bind-address: "*"
-geodata-mode: false
+geodata-mode: true 
 geodata-loader: mem
 geo-auto-update: true
 geo-update-interval: 24
@@ -31,24 +31,24 @@ p: &p
   interval: 1800
   health-check:
     enable: true
-    url: "https://www.gstatic.com/generate_204"
+    url: "http://www.gstatic.com/generate_204"
     interval: 300
-  proxy: 订阅更新
+  proxy: 訂閱更新
   header: 
       User-Agent:  
         - "ClashMetaForAndroid/2.11.23.Meta"
         - "mihomo/1.19.20"
 # —————————
 A: &A
-  url: "https://www.gstatic.com/generate_204"
+  url: "http://www.gstatic.com/generate_204"
   interval: 300
   use:
   - 花雲
   - WgetCloud
   - MESL
-  - 自建/拼车
+  - 家寬
 All: &All
-  url: "https://www.gstatic.com/generate_204"
+  url: "http://www.gstatic.com/generate_204"
   interval: 300
   type: smart
   strategy: sticky-sessions
@@ -61,7 +61,7 @@ All: &All
   - 花雲
   - WgetCloud
   - MESL
-  - 自建/拼车
+  - 家寬
 proxy-providers: 
   花雲: 
     <<: *p
@@ -70,7 +70,7 @@ proxy-providers:
       udp: true 
     filter: "^(?!.*(Traffic|Expire)).*$"
     path: ./proxy_provider/花雲.yaml
-    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_Trojan.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-a94dd788eb0ifv8l8zfwjc"
+    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_Trojan.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-53c62cbde33lpn6pgk"
   WgetCloud:
     <<: *p
     override:
@@ -88,13 +88,13 @@ proxy-providers:
     filter: "^(?=.*(家宽)).*$"
     path: ./proxy_provider/MESL.yaml
     url: "https://em.mesl.cloud/ems/get?token=d9e18a7d93d85b0e6c4dce2c589dabd5"       
-  自建/拼车:
+  家寬:
     <<: *p
     override:
-      additional-prefix: "自建/拼车："
+      additional-prefix: "家寬："
       udp: true
-    path: ./proxy_provider/自建.txt
-    url: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/%E8%87%AA%E5%BB%BA%E8%90%BD%E5%9C%B0.txt"
+    path: ./proxy_provider/家寬.txt
+    url: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/%E5%AE%B6%E5%AE%BD.txt"
 profile: 
   store-selected: true
   store-fake-ip: true
@@ -126,11 +126,10 @@ dns:
   fake-ip-range6: fdfe:dcba:9876::/48
   fake-ip-filter:
     - rule-set:Fake-IP-Filter
-    - rule-set:CN_域
+    - rule-set:Direct_域
     - rule-set:DouYin_域
     - rule-set:GoogleFCM_域
     - rule-set:Private_域    
-    - rule-set:自定义规则
   default-nameserver:
     - 223.5.5.5
     - 119.29.29.29
@@ -141,7 +140,7 @@ dns:
     - 223.5.5.5
     - 119.29.29.29    
   nameserver-policy:
-    "RULE-SET:CN_域,DouYin_域":
+    "RULE-SET:Direct_域,DouYin_域":
       - https://dns.alidns.com/dns-query
       - https://doh.pub/dns-query
     "RULE-SET:GoogleFCM_域":   
@@ -152,185 +151,188 @@ dns:
     - https://dns.google/dns-query
 # —————————
 proxies:
-  - {name: 🌐 本机·本地直连, type: direct, udp: true, ip-version: ipv6-prefer}
-  - {name: ⛔️ 禁止·拒绝连接, type: reject}
-  - {name: 🌐 DNS_Hijack, type: dns}
+  - {name: 🌐 國內直連, type: direct, udp: true, ip-version: ipv6-prefer}
+  - {name: ⛔️ 禁止連接, type: reject}
+  - {name: 🌐 DNS劫持, type: dns}
 # —————————
 proxy_groups: &proxy_groups
     type: select
     proxies:
-      - 总模式
-      - ALL·延迟最低
-      - ALL·中国香港
-      - ALL·中国台湾
-      - ALL·日本地区
-      - ALL·自建/拼车
-      - ALL·北美地区
-      - ALL·新加坡
-      - ALL·其它地区
-      - 🌐 本机·本地直连
+      - 總模式
+      - 香港
+      - 台灣
+      - 日本
+      - 家寬
+      - 新加坡
     <<: *A
 # —————————
 proxy-groups:
-  - name: 总模式
+  - name: 總模式
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Final_1.png"
     type: select
     proxies:
-      - ALL·中国香港
-      - ALL·中国台湾
-      - ALL·日本地区
-      - ALL·自建/拼车
-      - ALL·北美地区
-      - ALL·新加坡
-      - ALL·其它地区
-      - 🌐 本机·本地直连
-  - name: 订阅更新
+      - 香港
+      - 台灣
+      - 日本
+      - 家寬
+      - 新加坡
+      - 🌐 國內直連
+  - name: 訂閱更新
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Download.png"
     type: select
     proxies:
-      - 🌐 本机·本地直连
-      - 总模式
+      - 🌐 國內直連
+      - 總模式
   - name: Google
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Google_Search.png"
     <<: *proxy_groups
   - name: GoogleFCM
     icon: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/Logomark_Full%20Color.svg"
-    <<: *proxy_groups
-  - name: 漏网之鱼
+    type: select
+    proxies:
+      - 🌐 國內直連
+      - 總模式
+  - name: 國外代理
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: AI
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/AI.png"
     <<: *proxy_groups
-  - name: ALL·延迟最低
+  - name: Speedtest 
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Speedtest.png"
-    type: url-test
-    tolerance: 2
-    <<: *A
-  - name: ALL·中国香港
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*港)(?!.*自建).*$"
+    <<: *proxy_groups
+  - name: YouTube
+    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/YouTube.png"
+    filter: "^(?=.*澳门)(?!.*家寬).*$"
     <<: *All
-  - name: ALL·自建/拼车
+  - name: 香港
+    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Hong_Kong.png"
+    filter: "^(?=.*港)(?!.*家寬).*$"
+    <<: *All
+  - name: 家寬
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Server.png"
-    url: "https://www.gstatic.com/generate_204"
-    interval: 300
     type: select 
     use:
-    - 自建/拼车
-  - name: ALL·中国台湾
+    - 家寬
+  - name: 台灣
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*台)(?!.*自建).*$"
+    filter: "^(?=.*台)(?!.*家寬).*$"
     <<: *All
-  - name: ALL·日本地区
+  - name: 日本
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Japan.png"
-    filter: "^(?=.*日本)(?!.*自建).*$"
+    filter: "^(?=.*日本)(?!.*家寬).*$"
     <<: *All
-  - name: ALL·新加坡
+  - name: 新加坡
     icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Singapore.png"
-    filter: "^(?=.*(新加坡)).*$"
-    <<: *All
-  - name: ALL·北美地区
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/United_States.png"
-    filter: "^(?=.*(美|加拿大)).*$"
-    <<: *All
-  - name: ALL·其它地区
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Global.png"
-    filter: "^(?!.*(港|日本|美|台|新加坡|自建)).*$"
+    filter: "^(?=.*新加坡)(?!.*家寬).*$"
     <<: *All
 # —————————
 rule-anchor:
-  Local: &Local
-    {type: file, behavior: classical, format: text}
-  Classical: &Classical
-    {type: http, behavior: classical, format: text, interval: 3600}
   IPCIDR: &IPCIDR
     {type: http, behavior: ipcidr, format: mrs, interval: 3600}
   Domain: &Domain
     {type: http, behavior: domain, format: mrs, interval: 3600}
 # —————————
 rule-providers:
-  自定义规则: 
-    <<: *Local
-    path: ./rule_provider/自定义规则.list
-  WebRTC_端/域:
+  WebRTC_域:
     <<: *Domain
     path: ./rule_provider/WebRTC.mrs
-    url: "https://v6.gh-proxy.org/https://github.com/musiyun124/mihomo-rules/raw/refs/heads/rules/WebRTC.mrs" 
-  CN_IP:
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/webrtc/webrtc_domain.mrs"     
+    
+  Direct_域:
+    <<: *Domain
+    path: ./rule_provider/Direct_域.mrs
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs"  
+  Direct_IP:
     <<: *IPCIDR
-    path: ./rule_provider/CN_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/cn.mrs"
-  CN_域:
+    path: ./rule_provider/Direct_IP.mrs
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct@ip.mrs"
+    
+  No-ads-all_域:
     <<: *Domain
-    path: ./rule_provider/CN_域.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs"
-  No-ads-1_域:
-    <<: *Domain
-    path: ./rule_provider/No-ads-1_域.mrs
-    url: "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockmihomo.mrs" 
-  No-ads-2_域:
-    <<: *Domain
-    path: ./rule_provider/No-ads-2_域.mrs
-    url: "https://raw.githubusercontent.com/Filterrr/AdBlock_Rule_For_Clash/main/adblock_reject.mrs" 
+    path: ./rule_provider/No-ads-all_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs" 
   No-ads-all_IP:
     <<: *IPCIDR
     path: ./rule_provider/No-ads-all_IP.mrs
-    url: "https://raw.githubusercontent.com/QuixoticHeart/rule-set/refs/heads/ruleset/meta/ipcidr/adrules.mrs"    
+    url: "https://cdn.jsdelivr.net/gh/xndeye/rule-merger@release/reject@ip.mrs"    
+    
   DouYin_域:
     <<: *Domain
     path: ./rule_provider/DouYin.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/douyin.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_douyin/domain_douyin_domain.mrs"
+    
   Google_域:
     <<: *Domain
-    path: ./rule_provider/Google.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/google.mrs"
+    path: ./rule_provider/Google_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
   Google_IP:
     <<: *IPCIDR
     path: ./rule_provider/Google_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"   
   GoogleFCM_域:
-    <<: *Domain
+    <<: *Domain 
     path: ./rule_provider/GoogleFCM.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/googlefcm.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_googlefcm/domain_googlefcm_domain.mrs" 
+  YouTube_域:
+    <<: *Domain
+    path: ./rule_provider/YouTube.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_youtube/domain_youtube_domain.mrs"
+    
   AI_域:
     <<: *Domain
-    path: ./rule_provider/AU.mrs
-    url: "https://cdn.jsdelivr.net/gh/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/ai.mrs"
+    path: ./rule_provider/AI.mrs
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/ai.mrs"
+    
   Private_域:
     <<: *Domain
-    path: ./rule_provider/Private.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs"
+    path: ./rule_provider/Private_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_private/domain_private_domain.mrs"
   Private_IP:
     <<: *IPCIDR
     path: ./rule_provider/Private_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/private.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_private/ipcidr_private_ipcidr.mrs"
+    
   Fake-IP-Filter:
     <<: *Domain
     path: ./rule_provider/Fake-IP-Filter.mrs
-    url: "https://ghfast.top/github.com/DustinWin/ruleset_geodata/raw/refs/heads/mihomo-ruleset/fakeip-filter.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_fake-ip-filter/domain_fake-ip-filter_domain.mrs"
+
+  Speedtest_域:
+    <<: *Domain
+    path: ./rule_provider/Speedtest.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_speedtest/domain_speedtest_domain.mrs"  
 # —————————
 rules:
-  - DST-PORT,53,🌐 DNS_Hijack
-  - DST-PORT,853,总模式
-  - RULE-SET,自定义规则,🌐 本机·本地直连
-  - RULE-SET,WebRTC_端/域,PASS
-  - RULE-SET,No-ads-1_域,⛔️ 禁止·拒绝连接
-  - RULE-SET,No-ads-2_域,⛔️ 禁止·拒绝连接
-  - RULE-SET,No-ads-all_IP,⛔️ 禁止·拒绝连接
+  - DST-PORT,53,🌐 DNS劫持
+  - DST-PORT,853,總模式
+  
+  - RULE-SET,No-ads-all_域,⛔️ 禁止連接
+  - RULE-SET,No-ads-all_IP,⛔️ 禁止連接
+  
+  - DST-PORT,3478,⛔️ 禁止連接
+  - DST-PORT,19302,⛔️ 禁止連接
+  - RULE-SET,WebRTC_域,⛔️ 禁止連接
+  
   - DST-PORT,5228,GoogleFCM
-  - DOMAIN-KEYWORD,mtalk,GoogleFCM
   - RULE-SET,GoogleFCM_域,GoogleFCM
+  
   - PROCESS-NAME,com.ss.android.ugc.aweme.mobile,PASS
   - RULE-SET,DouYin_域,PASS
+  
   - RULE-SET,AI_域,AI
-  - DOMAIN-KEYWORD,anthropic,AI
-  - DOMAIN-KEYWORD,claude,AI
+  
+  - RULE-SET,Speedtest_域,Speedtest 
+  
+  - RULE-SET,YouTube_域,YouTube  
   - RULE-SET,Google_域,Google
-  - RULE-SET,Google_IP,Google,no-resolve
-  - RULE-SET,Private_域,🌐 本机·本地直连
-  - RULE-SET,Private_IP,🌐 本机·本地直连,no-resolve
-  - RULE-SET,CN_域,🌐 本机·本地直连
-  - RULE-SET,CN_IP,🌐 本机·本地直连
-  - MATCH,漏网之鱼
+  - RULE-SET,Google_IP,Google,no-resolve 
+  
+  - RULE-SET,Private_域,🌐 國內直連 
+  - RULE-SET,Private_IP,🌐 國內直連 ,no-resolve  
+  
+  - RULE-SET,Direct_域,🌐 國內直連 
+  - RULE-SET,Direct_IP,🌐 國內直連 ,no-resolve  
+  
+  - MATCH,國外代理
 # —————————
