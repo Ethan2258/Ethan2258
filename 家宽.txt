@@ -4,4 +4,3 @@ proxies:
   - {name: 🇹🇼 台灣Seednet, type: ss, server: ddnsseednet.vivf.cc, port: 52438, cipher: 2022-blake3-aes-256-gcm, password: "ibLbSUQPUMiVnU9QGZ4TTzAWuw5B+ISxoSrnO/EsTps=:RUdCTDdaMnhHZXdrZi1RTTdhZFcwV2FlQkJGVl95aHY=", udp: true, network: tcp, udp-over-tcp: false, udp-over-tcp-version: 1, client-fingerprint: chrome, dialer-proxy: 台灣}
   - {name: 🇸🇬 Singtel, type: ss, server: singtellxc.maywind.us.kg, port: 34801, cipher: 2022-blake3-aes-256-gcm, password: "meYxtQVNe+pRJANuS5ydc9ywP0iNOvoniyzjRmiumzo=:FH72SXHMKVkapXxk16/Ghp3YJgIwfePVs5F5sTq1l5Q=", udp: true, network: tcp, dialer-proxy: 新加坡}
   - {name: 🇯🇵 日本Rakuten, type: ss, server: 23.81.40.149, port: 22028, cipher: 2022-blake3-aes-128-gcm, password: "TDdNjlex0R6otcwl2jmAkQ==", udp: true, dialer-proxy: 日本}
-  - {name: 🇯🇵 日本Rk, type: ss, server: 23.81.40.149, port: 22028, cipher: 2022-blake3-aes-128-gcm, password: "TDdNjlex0R6otcwl2jmAkQ==", udp: true, dialer-proxy: 香港}
