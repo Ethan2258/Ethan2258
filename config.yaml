@@ -45,7 +45,6 @@ A: &A
   use:
   - 花雲
   - WgetCloud
-  - MESL
   - 家寬
 All: &All
   url: "http://www.gstatic.com/generate_204"
@@ -60,7 +59,6 @@ All: &All
   use:
   - 花雲
   - WgetCloud
-  - MESL
   - 家寬
 proxy-providers: 
   花雲: 
@@ -80,21 +78,13 @@ proxy-providers:
     ip-version: ipv6-prefer
     path: ./proxy_provider/WgetCloud.yaml
     url: "https://bava8u2znaj6bdzzjnfb.wgetcloud.online/link/a48c1a53-6043-30f7-b563-eb92714dc215?target=clash"     
-  MESL:
-    <<: *p
-    override:
-      additional-prefix: "MESL："
-      udp: true
-    filter: "^(?=.*(家宽)).*$"
-    path: ./proxy_provider/MESL.yaml
-    url: "https://em.mesl.cloud/ems/get?token=d9e18a7d93d85b0e6c4dce2c589dabd5"       
   家寬:
     <<: *p
     override:
       additional-prefix: "家寬："
       udp: true
     path: ./proxy_provider/家寬.txt
-    url: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/%E5%AE%B6%E5%AE%BD.txt"
+    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/%E5%AE%B6%E5%AE%BD.txt"
 profile: 
   store-selected: true
   store-fake-ip: true
@@ -129,23 +119,19 @@ dns:
     - rule-set:Direct_域
     - rule-set:DouYin_域
     - rule-set:GoogleFCM_域
-    - rule-set:Private_域    
-  default-nameserver:
-    - 223.5.5.5
-    - 119.29.29.29
+    - rule-set:Private_域   
   direct-nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
   proxy-server-nameserver:
-    - 223.5.5.5
-    - 119.29.29.29    
+    - https://1.12.12.12:443/dns-query
+    - https://223.5.5.5:443/dns-query  
   nameserver-policy:
     "RULE-SET:Direct_域,DouYin_域":
       - https://dns.alidns.com/dns-query
       - https://doh.pub/dns-query
-    "RULE-SET:GoogleFCM_域":   
-      - https://cloudflare-dns.com/dns-query
-      - https://dns.google/dns-query
+    "RULE-SET:YouTube_域":   
+      - 141.11.137.148
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
@@ -168,7 +154,7 @@ proxy_groups: &proxy_groups
 # —————————
 proxy-groups:
   - name: 總模式
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Final_1.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Final_1.png"
     type: select
     proxies:
       - 香港
@@ -178,52 +164,48 @@ proxy-groups:
       - 新加坡
       - 🌐 國內直連
   - name: 訂閱更新
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Download.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png"
     type: select
     proxies:
       - 🌐 國內直連
       - 總模式
   - name: Google
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Google_Search.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png"
     <<: *proxy_groups
   - name: GoogleFCM
-    icon: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/Logomark_Full%20Color.svg"
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Logomark_Full%20Color.svg"
     type: select
     proxies:
       - 🌐 國內直連
       - 總模式
   - name: 國外代理
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Proxy.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: AI
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/AI.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
     <<: *proxy_groups
-  - name: Speedtest 
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Speedtest.png"
-    <<: *proxy_groups
-  - name: YouTube
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/YouTube.png"
-    filter: "^(?=.*澳门)(?!.*家寬).*$"
-    <<: *All
   - name: 香港
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Hong_Kong.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
     filter: "^(?=.*港)(?!.*家寬).*$"
     <<: *All
+  - name: Speedtest 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
+    <<: *proxy_groups
+  - name: 台灣
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
+    filter: "^(?=.*台)(?!.*家寬).*$"
+    <<: *All
   - name: 家寬
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Server.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
     type: select 
     use:
     - 家寬
-  - name: 台灣
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*台)(?!.*家寬).*$"
-    <<: *All
   - name: 日本
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Japan.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
     filter: "^(?=.*日本)(?!.*家寬).*$"
     <<: *All
   - name: 新加坡
-    icon: "https://gh-proxy.org/https://github.com/Koolson/Qure/raw/refs/heads/master/IconSet/Color/Singapore.png"
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
     filter: "^(?=.*新加坡)(?!.*家寬).*$"
     <<: *All
 # —————————
@@ -306,6 +288,9 @@ rule-providers:
 rules:
   - DST-PORT,53,🌐 DNS劫持
   - DST-PORT,853,總模式
+
+  - DST-PORT,5228,GoogleFCM
+  - RULE-SET,GoogleFCM_域,GoogleFCM
   
   - RULE-SET,No-ads-all_域,⛔️ 禁止連接
   - RULE-SET,No-ads-all_IP,⛔️ 禁止連接
@@ -314,9 +299,6 @@ rules:
   - DST-PORT,19302,⛔️ 禁止連接
   - RULE-SET,WebRTC_域,⛔️ 禁止連接
   
-  - DST-PORT,5228,GoogleFCM
-  - RULE-SET,GoogleFCM_域,GoogleFCM
-  
   - PROCESS-NAME,com.ss.android.ugc.aweme.mobile,PASS
   - RULE-SET,DouYin_域,PASS
   
@@ -324,7 +306,6 @@ rules:
   
   - RULE-SET,Speedtest_域,Speedtest 
   
-  - RULE-SET,YouTube_域,YouTube  
   - RULE-SET,Google_域,Google
   - RULE-SET,Google_IP,Google,no-resolve 
   
