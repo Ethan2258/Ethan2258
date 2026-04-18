@@ -7,4 +7,4 @@ proxies:
   - {name: 🇹🇼 台灣HiNet, type: ss, server: bphinet.ngtec.top, port: 53670, cipher: aes-256-gcm, password: "V7lOmTr8gm7o9gKzLQBUhOgDXWhho8dkfTDIlRpdFxE=", udp: true, network: tcp, dialer-proxy: 台灣}
   - {name: 🇭🇰 香港HKT-2, type: ss, server: boil.hkt.dpdns.org, port: 21123, cipher: aes-128-gcm, password: "9SFH4VyztVQaikELX7uU1itNC90EMM0tyFIgLLaxZ7X9", udp: true, dialer-proxy: 香港}
   - {name: 🇹🇼 台灣Seednet-2, type: ss, server: tw-seednet.netfor.top, port: 56910, cipher: 2022-blake3-aes-128-gcm, password: "hV7WMs0rMxuQCmkopMpTdQ==:lk/bGS2uxqFTP2wWC5Ce1Q==", udp: true, network: tcp, dialer-proxy: 台灣}
-  - {name: 🇯🇵 日本KDDI-SS, type: ss, server: 82.40.42.35, port: 19245, cipher: 2022-blake3-aes-128-gcm, password: "rGYatgItazneYTTCrgecag==", udp: true}
+  - {name: 🇯🇵 日本KDDI-SS, type: ss, server: 82.40.42.35, port: 19245, cipher: 2022-blake3-aes-128-gcm, password: "rGYatgItazneYTTCrgecag==", udp: true, dialer-proxy: 日本}
