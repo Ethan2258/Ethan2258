@@ -39,13 +39,6 @@ p: &p
       User-Agent:  
         - "ClashMetaForAndroid/v2.11.26"
 # —————————
-ntp:
-  enable: true
-  write-to-system: true
-  server: time.apple.com
-  port: 123
-  interval: 30
-# —————————
 A: &A
   url: "http://www.gstatic.com/generate_204"
   interval: 300
