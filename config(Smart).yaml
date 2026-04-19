@@ -74,7 +74,7 @@ proxy-providers:
       additional-prefix: "花雲："
       udp: true 
     path: ./proxy_provider/花雲.yaml
-    url: "********************"
+    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_SS.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-53c62cbde33lpn6pgk%26sip002%3D1"
   WgetCloud:
     <<: *p
     override:
@@ -82,7 +82,7 @@ proxy-providers:
       udp: true
     ip-version: ipv6-prefer
     path: ./proxy_provider/WgetCloud.yaml
-    url: "***************"     
+    url: "https://bava8u2znaj6bdzzjnfb.wgetcloud.online/link/a48c1a53-6043-30f7-b563-eb92714dc215?target=clash"     
   家寬:
     type: file
     health-check:
@@ -259,20 +259,20 @@ rule-providers:
     
   Google_域:
     <<: *Domain
-    path: ./rule_provider/Google_域.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
+    path: ./rules/Google.mrs
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geosite/google.mrs"
   Google_IP:
     <<: *IPCIDR
-    path: ./rule_provider/Google_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"   
+    path: ./rules/Google_IP.mrs
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs"
   GoogleFCM_域:
     <<: *Domain 
     path: ./rule_provider/GoogleFCM.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_googlefcm/domain_googlefcm_domain.mrs" 
   YouTube_域:
     <<: *Domain
-    path: ./rule_provider/YouTube.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_youtube/domain_youtube_domain.mrs"
+    path: ./rules/YouTube.mrs    
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/youtube.mrs"
     
   AI_域:
     <<: *Domain
