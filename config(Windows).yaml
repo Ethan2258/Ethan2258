@@ -240,7 +240,7 @@ rule-providers:
   Google_域:
     <<: *Domain
     path: ./rules/Google.mrs
-    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geosite/google.mrs"
+    url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
   Google_IP:
     <<: *IPCIDR
     path: ./rules/Google_IP.mrs
