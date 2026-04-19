@@ -226,7 +226,7 @@ rule-anchor:
   Domain: &Domain
     {type: http, behavior: domain, format: mrs, interval: 3600}
   Classical: &Classical 
-    {type: http, behavior: domain, format: text, interval: 3600}e
+    {type: http, behavior: domain, format: text, interval: 3600}
 # —————————
 rule-providers:
   WebRTC_域:
