@@ -181,12 +181,6 @@ proxy-groups:
   - name: Google
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png"
     <<: *proxy_groups
-  - name: GoogleFCM
-    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Logomark_Full%20Color.svg"
-    type: select
-    proxies:
-      - 🌐 國內直連
-      - 總模式
   - name: 國外代理
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
