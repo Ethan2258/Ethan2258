@@ -74,7 +74,7 @@ proxy-providers:
       additional-prefix: "花雲："
       udp: true 
     path: ./proxy_provider/花雲.yaml
-    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_SS.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-53c62cbde33lpn6pgk%26sip002%3D1"
+    url: ""
   WgetCloud:
     <<: *p
     override:
@@ -82,7 +82,7 @@ proxy-providers:
       udp: true
     ip-version: ipv6-prefer
     path: ./proxy_provider/WgetCloud.yaml
-    url: "https://bava8u2znaj6bdzzjnfb.wgetcloud.online/link/a48c1a53-6043-30f7-b563-eb92714dc215?target=clash"     
+    url: ""     
   家寬:
     type: file
     health-check:
