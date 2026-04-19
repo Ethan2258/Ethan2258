@@ -37,7 +37,7 @@ p: &p
   exclude-filter: '(?i)套餐|订阅|Traffic|Expire'
   header: 
       User-Agent:  
-        - "ClashMetaForAndroid/v2.11.26"
+        - "clash-verge/v2.4.7"
 # —————————
 A: &A
   url: "http://www.gstatic.com/generate_204"
