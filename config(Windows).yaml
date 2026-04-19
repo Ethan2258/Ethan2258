@@ -93,6 +93,8 @@ proxy-providers:
       additional-prefix: "家寬："
       udp: true
     path: ./proxy_provider/家寬.txt
+# —————————
+profiles:
   store-selected: true
   store-fake-ip: true
   smart-collector-size: 100
