@@ -60,7 +60,7 @@ proxy-providers:
       udp: true 
     filter: ^(?=.*🇸🇬|🇨🇳|🇯🇵|🇹🇼|🇭🇰|🇳🇱|🇩🇪|🇫🇷|🇬🇧).*$
     path: ./proxy_provider/花雲.yaml
-    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_SS.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-53c62cbde33lpn6pgk%26sip002%3D1"
+    url: ""
   Kanata:
     <<: *p
     override:
