@@ -5,17 +5,13 @@
 - Learning open-source Android projects
 
 ### 🔧 Tech
-- Android / Magisk
-- LSPosed Modules
-- Shell / Linux
+- mihomo
 - Network (IPv4 / IPv6)
 
 ### 📌 Current
 - Testing Android system behaviors
 - Exploring LSPosed & Xposed ecosystem
 
-## 2026-03-01 Notes
-
-- Continued testing on Android 16
-- Observed that some system connections prefer short-lived HTTPS over long-lived sockets
-- Need more tests under different network conditions
+## 2026-04-23 Notes
+​- Exploring transparent proxy solutions using the boxproxy module.
+- ​Researching the mihomo core and optimizing configuration files.
