@@ -41,7 +41,7 @@ A: &A
   interval: 300
   use:
   - 花雲
-  - Sub
+  - Kanata
   - Local
 All: &All
   url: "https://www.gstatic.com/generate_204"
@@ -50,7 +50,7 @@ All: &All
   tolerance: 1
   use:
   - 花雲
-  - Sub
+  - Kanata
   - Local
 proxy-providers: 
   花雲: 
@@ -60,13 +60,13 @@ proxy-providers:
       udp: true 
     filter: ^(?=.*🇸🇬|🇨🇳|🇯🇵|🇹🇼|🇭🇰|🇳🇱|🇩🇪|🇫🇷|🇬🇧).*$
     path: ./proxy_provider/花雲.yaml
-    url: ""
-  Sub:
+    url: "https://api-huacloud.dev/sub?target=clash&insert=true&emoji=true&udp=true&clash.doh=true&new_name=true&filename=Flower_SS.yaml&url=https%3A%2F%2Fapi.xmancdn.com%2Fosubscribe.php%3Ftoken2%3Dqzm5pgky-53c62cbde33lpn6pgk%26sip002%3D1"
+  Kanata:
     <<: *p
     override:
-      additional-prefix: "Sub："
+      additional-prefix: "Kanata："
       udp: true
-    path: ./proxy_provider/Sub.txt
+    path: ./proxy_provider/Kanata.yaml
     url: "http://127.0.0.1:3000/download/collection/Sub"
   Local:
     <<: *p
@@ -139,7 +139,7 @@ proxy_groups: &proxy_groups
       - 總模式
       - Hong Kong 
       - Taiwan 
-      - Japen 
+      - Japan 
       - Local
       - Singapore 
     <<: *A
@@ -151,7 +151,7 @@ proxy-groups:
     proxies:
       - Hong Kong 
       - Taiwan 
-      - Japen 
+      - Japan
       - Local
       - Singapore 
       - 🌐 國內直連
@@ -184,6 +184,7 @@ proxy-groups:
     type: select 
     use:
     - Local
+    - Kanata
   - name: Hong Kong 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
     filter: "^(?=.*(🇭🇰))(?!.*(Local)).*$"
@@ -192,7 +193,7 @@ proxy-groups:
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
     filter: "^(?=.*(🇨🇳|🇹🇼))(?!.*(Local)).*$"
     <<: *All
-  - name: Japen 
+  - name: Japan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
     filter: "^(?=.*(🇯🇵))(?!.*(Local)).*$"
     <<: *All
