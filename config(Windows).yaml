@@ -4,9 +4,7 @@ redir-port: 9797
 tproxy-port: 9898
 ipv6: true
 prefer-ipv6: true
-lgbm-auto-update: false
-lgbm-update-interval: 72
-lgbm-url: "https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin"
+lgbm-url: "https://v6.gh-proxy.org/https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin"
 allow-lan: true
 bind-address: "*"
 geodata-mode: true 
@@ -14,7 +12,7 @@ geodata-loader: mem
 geo-auto-update: true
 geo-update-interval: 24
 geox-url:
-  asn: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb"
+  asn: "https://v6.gh-proxy.org/https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb"
 experimental:
   mptcp: true
   udp-fallback-match: true
@@ -23,7 +21,7 @@ tcp-concurrent: true
 log-level: silent 
 find-process-mode: strict
 external-controller: 0.0.0.0:9090 
-external-ui-url: "https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip"
+external-ui-url: "https://v6.gh-proxy.org/https://github.com/musiyun124/zashboard/archive/refs/heads/gh-pages-no-fonts.zip"
 external-ui: "./webroot/Zash/"
 # —————————
 p: &p
@@ -34,32 +32,31 @@ p: &p
     url: "http://www.gstatic.com/generate_204"
     interval: 300
   proxy: 訂閱更新
-  exclude-filter: '(?i)套餐|订阅|Traffic|Expire'
   header: 
       User-Agent:  
         - "clash-verge/v2.4.7"
 # —————————
 A: &A
-  url: "http://www.gstatic.com/generate_204"
+  url: "https://www.gstatic.com/generate_204"
   interval: 300
   use:
   - 花雲
-  - WgetCloud
-  - 家寬
+  - Kanata
+  - Local
 All: &All
-  url: "http://www.gstatic.com/generate_204"
-  interval: 300
+  url: "https://www.gstatic.com/generate_204"
+  interval: 180
   type: smart
-  strategy: sticky-sessions
-  tolerance: 5
   uselightgbm: true
-  collectdata: true
   sample-rate: 1
+  strategy: sticky-sessions
+  tolerance: 2
   prefer-asn: true
+  collectdata: true
   use:
   - 花雲
-  - WgetCloud
-  - 家寬
+  - Kanata
+  - Local
 proxy-providers: 
   花雲: 
     <<: *p
@@ -67,26 +64,22 @@ proxy-providers:
       additional-prefix: "花雲："
       udp: true 
     path: ./proxy_provider/花雲.yaml
-    url: "******************"
-  WgetCloud:
+    url: "http://127.0.0.1:38324/download/%E8%8A%B1%E4%BA%91"
+  Kanata:
     <<: *p
     override:
-      additional-prefix: "WgetCloud："
+      additional-prefix: "Kanata："
       udp: true
-    ip-version: ipv6-prefer
-    path: ./proxy_provider/WgetCloud.yaml
-    url: "**********************"     
-  家寬:
-    type: file
-    health-check:
-      enable: true
-      url: "http://www.gstatic.com/generate_204"
-      interval: 300
+    path: ./proxy_provider/Kanata.yaml
+    url: "http://127.0.0.1:38324/download/collection/Sub"
+  Local:
+    <<: *p
     override:
-      additional-prefix: "家寬："
+      additional-prefix: "Local："
       udp: true
-    path: ./proxy_provider/家寬.txt
-profiles:
+    path: ./proxy_provider/Local.txt
+    url: "http://127.0.0.1:38324/download/collection/Local"  
+profile: 
   store-selected: true
   store-fake-ip: true
   smart-collector-size: 100
@@ -116,9 +109,9 @@ dns:
   fake-ip-range: 198.18.0.1/16
   fake-ip-range6: fdfe:dcba:9876::/48
   fake-ip-filter:
-    - RULE-SET,Fake-IP-Filter,real-ip
-    - RULE-SET,Direct_域,real-ip
-    - RULE-SET,Private_域,real-ip
+    - rule-set:Fake-IP-Filter
+    - rule-set:Direct_域
+    - rule-set:Private_域   
   default-nameserver:
     - https://223.5.5.5/dns-query
     - https://1.12.12.12/dns-query
@@ -127,7 +120,7 @@ dns:
     - https://doh.pub/dns-query
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query 
+    - https://doh.pub/dns-query
   nameserver-policy:
     "RULE-SET:Direct_域":
       - https://dns.alidns.com/dns-query
@@ -147,11 +140,11 @@ proxy_groups: &proxy_groups
     type: select
     proxies:
       - 總模式
-      - 香港
-      - 台灣
-      - 日本
-      - 家寬
-      - 新加坡
+      - Hong Kong 
+      - Taiwan 
+      - Japan 
+      - Local
+      - Singapore 
     <<: *A
 # —————————
 proxy-groups:
@@ -159,11 +152,11 @@ proxy-groups:
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Final_1.png"
     type: select
     proxies:
-      - 香港
-      - 台灣
-      - 日本
-      - 家寬
-      - 新加坡
+      - Hong Kong 
+      - Taiwan 
+      - Japan 
+      - Local
+      - Singapore 
       - 🌐 國內直連
   - name: 訂閱更新
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png"
@@ -174,35 +167,40 @@ proxy-groups:
   - name: Google
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png"
     <<: *proxy_groups
-  - name: 國外代理
+  - name: Proxy
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: AI
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
     <<: *proxy_groups
-  - name: 香港
+  - name: Local
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
+    type: select 
+    use:
+    - Local
+    - Kanata
+  - name: Hong Kong 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*港)(?!.*家寬).*$"
+    filter: "^(?=.*(🇭🇰|HK))(?!.*(Local)).*$"
     <<: *All
   - name: Speedtest 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
     <<: *proxy_groups
-  - name: 台灣
+  - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*台)(?!.*家寬).*$"
+    filter: "^(?=.*(🇨🇳|TW|🇹🇼))(?!.*(Local)).*$"
     <<: *All
-  - name: 家寬
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
-    type: select 
-    use:
-    - 家寬
-  - name: 日本
+  - name: Japan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
-    filter: "^(?=.*日本)(?!.*家寬).*$"
+    filter: "^(?=.*(🇯🇵|JP))(?!.*(Local)).*$"
     <<: *All
-  - name: 新加坡
+  - name: Singapore 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
-    filter: "^(?=.*新加坡)(?!.*家寬).*$"
+    filter: "^(?=.*(🇸🇬|SG))(?!.*(Local)).*$"
+    <<: *All
+  - name: Europe 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
+    filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷|🇬🇧)).*$"
     <<: *All
 # —————————
 rule-anchor:
@@ -244,7 +242,7 @@ rule-providers:
   Google_IP:
     <<: *IPCIDR
     path: ./rules/Google_IP.mrs
-    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs" 
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs"
   YouTube_域:
      <<: *Domain
      path: ./rules/YouTube.mrs
@@ -281,7 +279,7 @@ rule-providers:
 rules:
   - DST-PORT,53,🌐 DNS劫持
   - DST-PORT,853,總模式
-
+  
   - RULE-SET,No-ads-all_域,⛔️ 禁止連接
   - RULE-SET,No-ads-all_IP,⛔️ 禁止連接
   
@@ -291,7 +289,7 @@ rules:
   
   - RULE-SET,AI_域,AI
   - RULE-SET,Claude_域,AI
-  
+    
   - RULE-SET,Speedtest_域,Speedtest 
   
   - RULE-SET,Google_域,Google
@@ -303,5 +301,5 @@ rules:
   - RULE-SET,Direct_域,🌐 國內直連 
   - RULE-SET,Direct_IP,🌐 國內直連 ,no-resolve  
   
-  - MATCH,國外代理
+  - MATCH,Proxy
 # —————————
