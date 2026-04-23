@@ -186,15 +186,15 @@ proxy-groups:
     - Local
   - name: Hong Kong 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(🇭🇰|HK))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇭🇰))(?!.*(Local)).*$"
     <<: *All
   - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*(🇨🇳|TW|🇹🇼))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇨🇳|🇹🇼))(?!.*(Local)).*$"
     <<: *All
   - name: Japen 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
-    filter: "^(?=.*(🇯🇵|JP))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇯🇵))(?!.*(Local)).*$"
     <<: *All
   - name: Europe
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
@@ -202,7 +202,7 @@ proxy-groups:
     <<: *All
   - name: Singapore 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
-    filter: "^(?=.*(🇸🇬|SG))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇸🇬))(?!.*(Local)).*$"
     <<: *All
 # —————————
 rule-anchor:
