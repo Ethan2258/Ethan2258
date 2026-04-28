@@ -66,28 +66,28 @@ proxy-providers:
       additional-prefix: "花雲："
       udp: true
     path: ./proxy_provider/花雲.yaml
-    url: "http://127.0.0.1:38325/download/%E8%8A%B1%E4%BA%91"
+    url: "http://127.0.0.1:38324/download/%E8%8A%B1%E4%BA%91"
   Turing:
     <<: *p
     override:
       additional-prefix: "Turing："
       udp: true
     path: ./proxy_provider/Turing.yaml
-    url: "http://127.0.0.1:38325/download/Turing"
+    url: "http://127.0.0.1:38324/download/Turing"
   IX:
     <<: *p
     override:
       additional-prefix: "IX："
       udp: true
     path: ./proxy_provider/IX.yaml
-    url: "http://127.0.0.1:38325/download/IX"   
+    url: "http://127.0.0.1:38324/download/IX"   
   Local:
     <<: *p
     override:
       additional-prefix: "Local："
       udp: true
     path: ./proxy_provider/Local.txt
-    url: "http://127.0.0.1:38325/download/collection/Local"  
+    url: "http://127.0.0.1:38324/download/collection/Local"  
 profile: 
   store-selected: true
   store-fake-ip: true
@@ -134,7 +134,7 @@ dns:
     "RULE-SET:Direct_域":
       - https://dns.alidns.com/dns-query
       - https://doh.pub/dns-query
-    "RULE-SET:YouTube_域":   
+    "RULE-SET:YouTube":   
       - 141.11.137.148
   nameserver:
     - https://cloudflare-dns.com/dns-query
@@ -219,10 +219,10 @@ rule-anchor:
   Domain: &Domain
     {type: http, behavior: domain, format: mrs, interval: 3600}
   Classical: &Classical 
-    {type: http, behavior: domain, format: text, interval: 3600}
+    {type: http, behavior: domain, format: yaml, interval: 3600}
 # —————————
 rule-providers:
-  WebRTC_域:
+  WebRTC:
     <<: *Domain
     path: ./rule_provider/WebRTC.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/webrtc/webrtc_domain.mrs"     
@@ -253,19 +253,19 @@ rule-providers:
     <<: *IPCIDR
     path: ./rules/Google_IP.mrs
     url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs"
-  YouTube_域:
+  YouTube:
      <<: *Domain
      path: ./rules/YouTube.mrs
      url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/youtube.mrs"
     
-  AI_域:
+  AI:
     <<: *Domain
     path: ./rule_provider/AI.mrs
     url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/ai.mrs"
-  Claude_域:
+  Claude:
     <<: *Classical 
-    path: ./rule_provider/Claude.txt
-    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Claude.txt"  
+    path: ./rule_provider/Claude.yaml
+    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Claude.yaml"  
     
   Private_域:
     <<: *Domain
@@ -281,37 +281,36 @@ rule-providers:
     path: ./rule_provider/Fake-IP-Filter.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_fake-ip-filter/domain_fake-ip-filter_domain.mrs"
 
-  Speedtest_域:
+  Speedtest:
     <<: *Domain
     path: ./rule_provider/Speedtest.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_speedtest/domain_speedtest_domain.mrs"  
 # —————————
 rules:
   - DST-PORT,53,🌐 DNS劫持
-  - DST-PORT,853,總模式
-  
+  - DST-PORT,853,總模式 
+    
+  - RULE-SET,Private_域,🌐 國內直連 
+  - RULE-SET,Private_IP,🌐 國內直連 ,no-resolve  
+
   - RULE-SET,No-ads-all_域,⛔️ 禁止連接
   - RULE-SET,No-ads-all_IP,⛔️ 禁止連接
   
   - DST-PORT,3478,⛔️ 禁止連接
   - DST-PORT,19302,⛔️ 禁止連接
-  - RULE-SET,WebRTC_域,⛔️ 禁止連接
-
-  - PROCESS-NAME,sub_store_node,訂閱更新
+  - RULE-SET,WebRTC,⛔️ 禁止連接
   
-  - RULE-SET,AI_域,AI
-  - RULE-SET,Claude_域,AI
+  - RULE-SET,AI,AI
+  - RULE-SET,Claude,AI
     
-  - RULE-SET,Speedtest_域,Speedtest 
+  - RULE-SET,Speedtest,Speedtest 
   
   - RULE-SET,Google_域,Google
   - RULE-SET,Google_IP,Google,no-resolve 
-  
-  - RULE-SET,Private_域,🌐 國內直連 
-  - RULE-SET,Private_IP,🌐 國內直連 ,no-resolve  
   
   - RULE-SET,Direct_域,🌐 國內直連 
   - RULE-SET,Direct_IP,🌐 國內直連 ,no-resolve  
   
   - MATCH,Proxy
 # —————————
+
