@@ -130,13 +130,19 @@ dns:
     - RULE-SET,Fake-IP-Filter,real-ip
     - RULE-SET,Private_域,real-ip
     - RULE-SET,Direct_域,real-ip
+  default-nameserver:
+    - 223.5.5.5
+    - 1.12.12.12
   direct-nameserver:
-    - 127.0.0.1:1451
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
   proxy-server-nameserver:
-    - 127.0.0.1:1451
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
   nameserver-policy:
     "RULE-SET:Direct_域":
-      - 127.0.0.1:1451
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
