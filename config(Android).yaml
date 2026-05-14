@@ -193,7 +193,7 @@ proxy-groups:
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: GoogleFCM
-    icon: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/Logomark_Full%20Color.svg"
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/GoogleFCM.svg"
     type: select
     proxies:
       - 🌐 國內直連
@@ -210,10 +210,9 @@ proxy-groups:
   - name: Speedtest 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
     <<: *proxy_groups
-  - name: Hong Kong 
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
-    <<: *All
+  - name: Nodeseek 
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/nodeseek.png"
+    <<: *proxy_groups
   - name: Sub
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
     filter: "^(?!.*(CN2|直连)).*$"
@@ -222,6 +221,10 @@ proxy-groups:
     - Local
     - IX
     - Dragonfly
+  - name: Hong Kong 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
+    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
+    <<: *All
   - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
     filter: "^(?=.*(🇹🇼))(?!.*(Seednet|Hinet|IX)).*$"
@@ -288,20 +291,11 @@ rule-providers:
     <<: *IPCIDR
     path: ./rule_provider/Google_IP.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"
-  YouTube:
-     <<: *Domain
-     path: ./rules/YouTube.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_youtube/domain_youtube_domain.mrs"  
      
   DouYin:
      <<: *Domain
      path: ./rules/DouYin.mrs
      url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_douyin/domain_douyin_domain.mrs"
-  
-  Telegram:
-     <<: *Domain
-     path: ./rules/Telegram.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_domain.mrs"  
     
   AI:
     <<: *Domain
@@ -341,16 +335,15 @@ rules:
 
   - OR,((RULE-SET,No-ads-all_域),(RULE-SET,No-ads-all_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
 
-  - OR,((PROCESS-NAME,com.ss.android.ugc.aweme.mobile),(RULE-SET,DouYin)),🌐 國內直連
+  - OR,((PROCESS-NAME,com.ss.android.ugc.aweme.mobile),(RULE-SET,DouYin)),🌐 國內直連 
   
-  - OR,((PROCESS-NAME,org.telegram.messenger.beta),(RULE-SET,Telegram)), Telegram 
-
   - OR,((RULE-SET,AI),(RULE-SET,Claude)),AI
 
   - OR,((DST-PORT,5228),(RULE-SET,GoogleFCM)),GoogleFCM
   - OR,((RULE-SET,Google_域),(RULE-SET,Google_IP,no-resolve)),Google
 
-  - DOMAIN-KEYWORD,nodeseek,Europe
+  - PROCESS-NAME,org.telegram.messenger.beta,Telegram 
+  - DOMAIN-KEYWORD,nodeseek,Nodeseek
   - RULE-SET,Speedtest,Speedtest
 
   - OR,((RULE-SET,Direct_域),(RULE-SET,Direct_IP,no-resolve)),🌐 國內直連
