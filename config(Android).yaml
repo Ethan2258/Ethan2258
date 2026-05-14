@@ -6,8 +6,7 @@ ipv6: true
 prefer-ipv6: true
 lgbm-url: "https://v6.gh-proxy.org/https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model-large.bin"
 allow-lan: true
-bind-address: "*"
-geodata-mode: true 
+bind-address: "*" 
 geodata-loader: mem
 geo-auto-update: true
 geo-update-interval: 24
@@ -45,6 +44,7 @@ A: &A
   - IX
   - Local
   - 肯の机
+  - Dragonfly
 All: &All
   type: smart
   url: "https://www.gstatic.com/generate_204"
@@ -60,6 +60,7 @@ All: &All
   - IX
   - Local
   - 肯の机
+  - Dragonfly
 proxy-providers: 
   花雲: 
     <<: *p
@@ -81,7 +82,14 @@ proxy-providers:
       additional-prefix: "IX："
       udp: true
     path: ./proxy_provider/IX.yaml
-    url: "http://127.0.0.1:3000/download/IX"   
+    url: "http://127.0.0.1:3000/download/IX"  
+  Dragonfly:
+    <<: *p
+    override:
+      additional-prefix: "Dragonfly："
+      udp: true
+    path: ./proxy_provider/Dragonfly.yaml
+    url: "http://127.0.0.1:3000/download/Dragonfly"  
   Local:
     <<: *p
     override:
@@ -120,7 +128,7 @@ dns:
   ipv6: true
   prefer-ipv6: true
   ipv6-timeout: 300
-  prefer-h3: true
+  respect-rules: true
   listen: 0.0.0.0:1053
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
@@ -141,8 +149,8 @@ dns:
     "RULE-SET:Direct_域,DouYin":
       - 127.0.0.1:1451
   nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query#h3=true
+    - https://dns.google/dns-query#h3=true
 # —————————
 proxies:
   - {name: 🌐 國內直連, type: direct, udp: true, ip-version: ipv6-prefer}
@@ -196,9 +204,16 @@ proxy-groups:
   - name: AI
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
     <<: *proxy_groups
+  - name: Telegram 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram_X.png"
+    <<: *proxy_groups
   - name: Speedtest 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
     <<: *proxy_groups
+  - name: Hong Kong 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
+    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
+    <<: *All
   - name: Sub
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
     filter: "^(?!.*(CN2|直连)).*$"
@@ -206,25 +221,22 @@ proxy-groups:
     use:
     - Local
     - IX
-  - name: Hong Kong 
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(🇭🇰))(?!.*(Local|IX)).*$"
-    <<: *All
+    - Dragonfly
   - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*(🇹🇼))(?!.*(Local|IX)).*$"
+    filter: "^(?=.*(🇹🇼))(?!.*(Seednet|Hinet|IX)).*$"
     <<: *All
   - name: Japan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
     filter: "^(?=.*(🇯🇵))(?!.*(Local)).*$"
     <<: *All
-  - name: Europe
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
-    filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷|🇬🇧)).*$"
-    <<: *All
   - name: Singapore 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
     filter: "^(?=.*(🇸🇬))(?!.*(Local)).*$"
+    <<: *All
+  - name: Europe
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
+    filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷|🇬🇧)).*$"
     <<: *All
   - name: America
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/America_Map.png"
@@ -284,7 +296,12 @@ rule-providers:
   DouYin:
      <<: *Domain
      path: ./rules/DouYin.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_douyin/domain_douyin_domain.mrs"  
+     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_douyin/domain_douyin_domain.mrs"
+  
+  Telegram:
+     <<: *Domain
+     path: ./rules/Telegram.mrs
+     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_domain.mrs"  
     
   AI:
     <<: *Domain
@@ -325,6 +342,8 @@ rules:
   - OR,((RULE-SET,No-ads-all_域),(RULE-SET,No-ads-all_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
 
   - OR,((PROCESS-NAME,com.ss.android.ugc.aweme.mobile),(RULE-SET,DouYin)),🌐 國內直連
+  
+  - OR,((PROCESS-NAME,org.telegram.messenger.beta),(RULE-SET,Telegram)), Telegram 
 
   - OR,((RULE-SET,AI),(RULE-SET,Claude)),AI
 
