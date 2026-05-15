@@ -103,7 +103,7 @@ proxy-providers:
       additional-prefix: "肯の机："
       udp: true
     path: ./proxy_provider/肯の机.yaml
-    url: "http://127.0.0.1:38324/download/%E8%82%AF%E3%81%AE%E6%9C%BA"  
+    url: "http://127.0.0.1:38324/download/%E8%82%AF%E3%81%AE%E6%9C%BA" 
 profile: 
   store-selected: true
   store-fake-ip: true
@@ -152,8 +152,8 @@ dns:
       - https://dns.alidns.com/dns-query
       - https://doh.pub/dns-query
   nameserver:
-    - https://cloudflare-dns.com/dns-query#h3=true
-    - https://dns.google/dns-query#h3=true
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
 # —————————
 proxies:
   - {name: 🌐 國內直連, type: direct, udp: true, ip-version: ipv6-prefer}
@@ -196,7 +196,7 @@ proxy-groups:
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: GoogleFCM
-    icon: "https://gh-proxy.org/https://github.com/Ethan2258/Ethan2258/raw/refs/heads/main/Logomark_Full%20Color.svg"
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/GoogleFCM.svg"
     type: select
     proxies:
       - 🌐 國內直連
@@ -213,10 +213,9 @@ proxy-groups:
   - name: Speedtest 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
     <<: *proxy_groups
-  - name: Hong Kong 
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
-    <<: *All
+  - name: Nodeseek 
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/nodeseek.png"
+    <<: *proxy_groups
   - name: Sub
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
     filter: "^(?!.*(CN2|直连)).*$"
@@ -225,6 +224,10 @@ proxy-groups:
     - Local
     - IX
     - Dragonfly
+  - name: Hong Kong 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
+    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
+    <<: *All
   - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
     filter: "^(?=.*(🇹🇼))(?!.*(Seednet|Hinet|IX)).*$"
@@ -267,7 +270,7 @@ rule-providers:
   Direct_域:
     <<: *Domain
     path: ./rule_provider/Direct_域.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs" 
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs"
     
   No-ads-all_域:
     <<: *Domain
@@ -286,16 +289,12 @@ rule-providers:
     <<: *IPCIDR
     path: ./rule_provider/Google_IP.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"
-  YouTube:
-     <<: *Domain
-     path: ./rules/YouTube.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_youtube/domain_youtube_domain.mrs"  
-  
-  Telegram:
-     <<: *Domain
-     path: ./rules/Telegram.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_domain.mrs"  
     
+  Telegram_IP:
+     <<: *IPCIDR
+     path: ./rule_provider/Telegram_IP.mrs
+     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_ipcidr.mrs"  
+     
   AI:
     <<: *Domain
     path: ./rule_provider/AI.mrs
@@ -325,6 +324,8 @@ rule-providers:
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_speedtest/domain_speedtest_domain.mrs"  
 # —————————
 rules:
+  - PROCESS-NAME,sub_store_node,訂閱更新
+
   - DST-PORT,53,🌐 DNS劫持
   - DST-PORT,853,總模式
 
@@ -332,13 +333,13 @@ rules:
 
   - OR,((RULE-SET,No-ads-all_域),(RULE-SET,No-ads-all_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
   
-  - RULE-SET,Telegram,Telegram 
-
   - OR,((RULE-SET,AI),(RULE-SET,Claude)),AI
-  
+
   - OR,((RULE-SET,Google_域),(RULE-SET,Google_IP,no-resolve)),Google
 
-  - DOMAIN-KEYWORD,nodeseek,Europe
+  - PROCESS-NAME-WILDCARD,*telegram*,Telegram 
+  - RULE-SET,Telegram_IP,Telegram 
+  - DOMAIN-KEYWORD,nodeseek,Nodeseek
   - RULE-SET,Speedtest,Speedtest
 
   - OR,((RULE-SET,Direct_域),(RULE-SET,Direct_IP,no-resolve)),🌐 國內直連
