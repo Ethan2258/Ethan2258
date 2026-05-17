@@ -1,8 +1,8 @@
 payload:
-    - +.22112211.xyz
-    - +.deepflood.com
-    - +.nodeget.com
-    - +.nodeimage.com
-    - +.nodequality.com
-    - +.nodeseek.com
-    - +.seek.li
+  - DOMAIN-SUFFIX,22112211.xyz
+  - DOMAIN-SUFFIX,deepflood.com
+  - DOMAIN-SUFFIX,nodeget.com
+  - DOMAIN-SUFFIX,nodeimage.com
+  - DOMAIN-SUFFIX,nodequality.com
+  - DOMAIN-SUFFIX,nodeseek.com
+  - DOMAIN-SUFFIX,seek.li
