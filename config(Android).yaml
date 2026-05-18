@@ -41,8 +41,7 @@ A: &A
   use:
   - 花雲
   - Turing
-  - IX
-  - Local
+  - Sub
   - 肯の机
   - Dragonfly
 All: &All
@@ -51,63 +50,53 @@ All: &All
   interval: 60           
   uselightgbm: true      
   sample-rate: 1
-  collectdata: true
   prefer-asn: true
   tolerance: 0        
   use:
   - 花雲
   - Turing
-  - IX
-  - Local
+  - Sub
   - 肯の机
   - Dragonfly
 proxy-providers: 
   花雲: 
     <<: *p
     override:
-      additional-prefix: "花雲："
+      additional-prefix: "花雲: "
       udp: true
     path: ./proxy_provider/花雲.yaml
     url: "http://127.0.0.1:3000/download/%E8%8A%B1%E4%BA%91"
   Turing:
     <<: *p
     override:
-      additional-prefix: "Turing："
+      additional-prefix: "Turing: "
       udp: true
     path: ./proxy_provider/Turing.yaml
     url: "http://127.0.0.1:3000/download/Turing"
-  IX:
-    <<: *p
-    override:
-      additional-prefix: "IX："
-      udp: true
-    path: ./proxy_provider/IX.yaml
-    url: "http://127.0.0.1:3000/download/IX"  
   Dragonfly:
     <<: *p
     override:
-      additional-prefix: "Dragonfly："
+      additional-prefix: "Dragonfly: "
       udp: true
     path: ./proxy_provider/Dragonfly.yaml
     url: "http://127.0.0.1:3000/download/Dragonfly"  
-  Local:
+  Sub:
     <<: *p
     override:
-      additional-prefix: "Local："
+      additional-prefix: "Sub: "
       udp: true
-    path: ./proxy_provider/Local.yaml
-    url: "http://127.0.0.1:3000/download/collection/Local"  
+    path: ./proxy_provider/Sub.yaml
+    url: "http://127.0.0.1:3000/download/collection/Sub"  
   肯の机:
     <<: *p
     override:
-      additional-prefix: "肯の机："
+      additional-prefix: "肯の机: "
       udp: true
     path: ./proxy_provider/肯の机.yaml
     url: "http://127.0.0.1:3000/download/%E8%82%AF%E3%81%AE%E6%9C%BA"  
 profile: 
   store-selected: true
   store-fake-ip: true
-  smart-collector-size: 100
 # —————————
 sniffer:
   enable: true
@@ -138,7 +127,6 @@ dns:
     - RULE-SET,GoogleFCM,real-ip
     - RULE-SET,Fake-IP-Filter,real-ip
     - RULE-SET,Private_域,real-ip
-    - RULE-SET,DouYin,real-ip
     - RULE-SET,Google_域,fake-ip
     - RULE-SET,Direct_域,real-ip
   direct-nameserver:
@@ -146,11 +134,11 @@ dns:
   proxy-server-nameserver:
     - 127.0.0.1:1451
   nameserver-policy:
-    "RULE-SET:Direct_域,DouYin":
+    "RULE-SET:Direct_域":
       - 127.0.0.1:1451
   nameserver:
-    - https://cloudflare-dns.com/dns-query#h3=true
-    - https://dns.google/dns-query#h3=true
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
 # —————————
 proxies:
   - {name: 🌐 國內直連, type: direct, udp: true, ip-version: ipv6-prefer}
@@ -166,8 +154,8 @@ proxy_groups: &proxy_groups
       - Japan 
       - Sub
       - Singapore 
-      - Europe
       - America
+      - Europe
     <<: *A
 # —————————
 proxy-groups:
@@ -181,7 +169,7 @@ proxy-groups:
       - Sub
       - Singapore
       - Europe
-      - America 
+      - America
       - 🌐 國內直連
   - name: 訂閱更新
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png"
@@ -215,36 +203,34 @@ proxy-groups:
     <<: *proxy_groups
   - name: Sub
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
-    filter: "^(?!.*(CN2|直连)).*$"
+    filter: "^(?=.*(HKT|Seednet|IX)).*$"
     type: select 
     use:
-    - Local
-    - IX
-    - Dragonfly
-  - name: Hong Kong 
+    - Sub
+  - name: Hong Kong
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
     filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
     <<: *All
   - name: Taiwan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*(🇹🇼))(?!.*(Seednet|Hinet|IX)).*$"
+    filter: "^(?=.*(🇹🇼))(?!.*(Seednet|IX)).*$"
     <<: *All
   - name: Japan 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
-    filter: "^(?=.*(🇯🇵))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇯🇵)).*$"
     <<: *All
   - name: Singapore 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
-    filter: "^(?=.*(🇸🇬))(?!.*(Local)).*$"
-    <<: *All
-  - name: Europe
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
-    filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷|🇬🇧)).*$"
+    filter: "^(?=.*(🇸🇬)).*$"
     <<: *All
   - name: America
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/America_Map.png"
-    filter: "^(?=.*(🇺🇸|🇨🇦))(?!.*(Local)).*$"
+    filter: "^(?=.*(🇺🇸|🇦🇺|🇨🇦)).*$"
     <<: *All   
+  - name: Europe
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
+    filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷)).*$"
+    <<: *All
 # —————————
 rule-anchor:
   IPCIDR: &IPCIDR
@@ -252,50 +238,30 @@ rule-anchor:
   Domain: &Domain
     {type: http, behavior: domain, format: mrs, interval: 3600}
   Classical: &Classical 
-    {type: http, behavior: domain, format: yaml, interval: 3600}
+    {type: http, behavior: classical, format: yaml, interval: 3600}
 # —————————
 rule-providers:
+  Private_域:
+    <<: *Domain
+    path: ./rule_provider/Private_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_private/domain_private_domain.mrs"
+  Private_IP:
+    <<: *IPCIDR
+    path: ./rule_provider/Private_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_private/ipcidr_private_ipcidr.mrs"
+    
+  AD_域:
+    <<: *Domain
+    path: ./rule_provider/AD_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs" 
+  AD_IP:
+    <<: *IPCIDR
+    path: ./rule_provider/AD_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/xndeye/rule-merger@release/reject@ip.mrs"        
   WebRTC:
     <<: *Domain
     path: ./rule_provider/WebRTC.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/webrtc/webrtc_domain.mrs"     
-    
-  Direct_IP:
-    <<: *IPCIDR
-    path: ./rule_provider/Direct_IP.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct@ip.mrs"
-  Direct_域:
-    <<: *Domain
-    path: ./rule_provider/Direct_域.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs"
-    
-  GoogleFCM:
-    <<: *Domain 
-    path: ./rule_provider/GoogleFCM.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_googlefcm/domain_googlefcm_domain.mrs" 
-    
-  No-ads-all_域:
-    <<: *Domain
-    path: ./rule_provider/No-ads-all_域.mrs
-    url: "https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs" 
-  No-ads-all_IP:
-    <<: *IPCIDR
-    path: ./rule_provider/No-ads-all_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/xndeye/rule-merger@release/reject@ip.mrs"    
-    
-  Google_域:
-    <<: *Domain
-    path: ./rule_provider/Google.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
-  Google_IP:
-    <<: *IPCIDR
-    path: ./rule_provider/Google_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"
-     
-  DouYin:
-     <<: *Domain
-     path: ./rules/DouYin.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_douyin/domain_douyin_domain.mrs"
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/webrtc/webrtc_domain.mrs"        
     
   AI:
     <<: *Domain
@@ -306,44 +272,69 @@ rule-providers:
     path: ./rule_provider/Claude.yaml
     url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Claude.yaml"  
     
-  Private_域:
-    <<: *Domain
-    path: ./rule_provider/Private_域.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_private/domain_private_domain.mrs"
-  Private_IP:
-    <<: *IPCIDR
-    path: ./rule_provider/Private_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_private/ipcidr_private_ipcidr.mrs"
+  GoogleFCM:
+    <<: *Domain 
+    path: ./rule_provider/GoogleFCM.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_googlefcm/domain_googlefcm_domain.mrs" 
     
-  Fake-IP-Filter:
+  Google_域:
     <<: *Domain
-    path: ./rule_provider/Fake-IP-Filter.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_fake-ip-filter/domain_fake-ip-filter_domain.mrs"
+    path: ./rule_provider/Google.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
+  Google_IP:
+    <<: *IPCIDR
+    path: ./rule_provider/Google_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"
 
+  Telegram_IP:
+     <<: *IPCIDR
+     path: ./rule_provider/Telegram_IP.mrs
+     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_ipcidr.mrs"  
+     
   Speedtest:
     <<: *Domain
     path: ./rule_provider/Speedtest.mrs
     url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_speedtest/domain_speedtest_domain.mrs"  
+    
+  Nodeseek:
+    <<: *Classical 
+    path: ./rule_provider/Nodeseek.yaml
+    url: "https://fastly.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Nodeseek.yaml"  
+    
+  Direct_IP:
+    <<: *IPCIDR
+    path: ./rule_provider/Direct_IP.mrs
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct@ip.mrs"
+  Direct_域:
+    <<: *Domain
+    path: ./rule_provider/Direct_域.mrs
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs"
+    
+  Fake-IP-Filter:
+    <<: *Domain
+    path: ./rule_provider/Fake-IP-Filter.mrs
+    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_fake-ip-filter/domain_fake-ip-filter_domain.mrs"   
 # —————————
 rules:
-  - PROCESS-NAME,sub_store_node,訂閱更新
-
   - DST-PORT,53,🌐 DNS劫持
   - DST-PORT,853,總模式
 
   - OR,((RULE-SET,Private_域),(RULE-SET,Private_IP,no-resolve)),🌐 國內直連
-
-  - OR,((RULE-SET,No-ads-all_域),(RULE-SET,No-ads-all_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
-
-  - OR,((PROCESS-NAME,com.ss.android.ugc.aweme.mobile),(RULE-SET,DouYin)),🌐 國內直連 
   
+  - PROCESS-NAME,sub_store_node,訂閱更新
+
+  - OR,((RULE-SET,AD_域),(RULE-SET,AD_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
+
   - OR,((RULE-SET,AI),(RULE-SET,Claude)),AI
 
   - OR,((DST-PORT,5228),(RULE-SET,GoogleFCM)),GoogleFCM
+  
   - OR,((RULE-SET,Google_域),(RULE-SET,Google_IP,no-resolve)),Google
 
-  - PROCESS-NAME,org.telegram.messenger.beta,Telegram 
-  - DOMAIN-KEYWORD,nodeseek,Nodeseek
+  - OR,((PROCESS-NAME-WILDCARD,*telegram*),(RULE-SET,Telegram_IP,no-resolve)),Telegram 
+
+  - RULE-SET,Nodeseek,Nodeseek
+  
   - RULE-SET,Speedtest,Speedtest
 
   - OR,((RULE-SET,Direct_域),(RULE-SET,Direct_IP,no-resolve)),🌐 國內直連
