@@ -3,7 +3,6 @@ mixed-port: 7890
 redir-port: 9797
 tproxy-port: 9898
 ipv6: true
-prefer-ipv6: true
 lgbm-url: "https://v6.gh-proxy.org/https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model-large.bin"
 allow-lan: true
 bind-address: "*" 
@@ -12,12 +11,11 @@ geo-auto-update: true
 geo-update-interval: 24
 geox-url:
   asn: "https://v6.gh-proxy.org/https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb"
-experimental:
-  mptcp: true
-  udp-fallback-match: true
 unified-delay: true
 tcp-concurrent: true
-log-level: silent 
+tcp-keep-alive-idle: 15
+tcp-keep-alive-interval: 15
+log-level: error
 find-process-mode: strict
 external-controller: 0.0.0.0:9090 
 external-ui-url: "https://v6.gh-proxy.org/https://github.com/musiyun124/zashboard/archive/refs/heads/gh-pages-no-fonts.zip"
@@ -30,10 +28,17 @@ p: &p
     enable: true
     url: "https://www.gstatic.com/generate_204"
     interval: 300
-  proxy: 訂閱更新
+  proxy: 🌐 國內直連
   header: 
       User-Agent:  
         - "ClashMetaForAndroid/v2.11.27"
+# —————————
+ntp:
+  enable: true
+  write-to-system: true
+  server: pool.ntp.org
+  port: 123
+  interval: 5
 # —————————
 A: &A
   url: "https://www.gstatic.com/generate_204"
@@ -47,11 +52,11 @@ A: &A
 All: &All
   type: smart
   url: "https://www.gstatic.com/generate_204"
-  interval: 60           
+  interval: 300
   uselightgbm: true      
   sample-rate: 1
   prefer-asn: true
-  tolerance: 0        
+  tolerance: 3
   use:
   - 花雲
   - Turing
@@ -102,12 +107,13 @@ sniffer:
   enable: true
   force-dns-mapping: true
   parse-pure-ip: true
-  override-destination: true
+  override-destination: false 
   sniff:
     HTTP:
       ports: [80, 8080-8880]
+      override-destination: true 
     TLS:
-      ports: [443, 8443]
+      ports: [443, 5228, 8443]   
     QUIC:
       ports: [443, 8443]
 # —————————
@@ -116,7 +122,6 @@ dns:
   cache-algorithm: arc
   ipv6: true
   prefer-ipv6: true
-  ipv6-timeout: 300
   respect-rules: true
   listen: 0.0.0.0:1053
   enhanced-mode: fake-ip
@@ -134,7 +139,7 @@ dns:
   proxy-server-nameserver:
     - 127.0.0.1:1451
   nameserver-policy:
-    "RULE-SET:Direct_域":
+    "rule-set:Direct_域,Private_域,Fake-IP-Filter":
       - 127.0.0.1:1451
   nameserver:
     - https://cloudflare-dns.com/dns-query
@@ -149,12 +154,10 @@ proxy_groups: &proxy_groups
     type: select
     proxies:
       - 總模式
-      - Hong Kong 
-      - Taiwan 
-      - Japan 
+      - Hong Kong
+      - Taiwan
       - Sub
-      - Singapore 
-      - America
+      - Singapore
       - Europe
     <<: *A
 # —————————
@@ -163,70 +166,58 @@ proxy-groups:
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Final_1.png"
     type: select
     proxies:
-      - Hong Kong 
-      - Taiwan 
-      - Japan
+      - Hong Kong
+      - Taiwan
       - Sub
       - Singapore
       - Europe
-      - America
       - 🌐 國內直連
-  - name: 訂閱更新
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Download.png"
-    type: select
-    proxies:
-      - 🌐 國內直連
-      - 總模式
-  - name: Proxy
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
-    <<: *proxy_groups
   - name: GoogleFCM
     icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/GoogleFCM.svg"
-    type: select
+    type: url-test
+    url: "http://connect.rom.miui.com/generate_204"
+    interval: 300
     proxies:
       - 🌐 國內直連
-      - 總模式
   - name: Google
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png"
+    <<: *proxy_groups
+  - name: Proxy
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
     <<: *proxy_groups
   - name: AI
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
     <<: *proxy_groups
-  - name: Telegram 
+  - name: Telegram
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram_X.png"
     <<: *proxy_groups
-  - name: Speedtest 
+  - name: Speedtest
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Speedtest.png"
     <<: *proxy_groups
-  - name: Nodeseek 
-    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/nodeseek.png"
+  - name: Nodeseek
+    icon: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/nodeseek.svg"
     <<: *proxy_groups
-  - name: Sub
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
-    filter: "^(?=.*(HKT|Seednet|IX)).*$"
-    type: select 
-    use:
-    - Sub
   - name: Hong Kong
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(🇭🇰))(?!.*(HKT|IX)).*$"
-    <<: *All
-  - name: Taiwan 
+    filter: "^(?=.*(🇭🇰))(?!.*(HKT)).*$"
+    <<: *All 
+  - name: YouTube
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png"
+    <<: *proxy_groups  
+  - name: Taiwan
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
-    filter: "^(?=.*(🇹🇼))(?!.*(Seednet|IX)).*$"
-    <<: *All
-  - name: Japan 
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Japan.png"
-    filter: "^(?=.*(🇯🇵)).*$"
-    <<: *All
-  - name: Singapore 
+    filter: "^(?=.*(🇹🇼))(?!.*(Seednet|HiNet)).*$"
+    <<: *All 
+  - name: Sub
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Server.png"
+    filter: "^(?=.*(HKT|Seednet|HiNet)).*$"
+    type: select
+    use:
+    - Sub
+  - name: Singapore
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
     filter: "^(?=.*(🇸🇬)).*$"
     <<: *All
-  - name: America
-    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/America_Map.png"
-    filter: "^(?=.*(🇺🇸|🇦🇺|🇨🇦)).*$"
-    <<: *All   
   - name: Europe
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
     filter: "^(?=.*(🇳🇱|🇩🇪|🇫🇷)).*$"
@@ -234,21 +225,21 @@ proxy-groups:
 # —————————
 rule-anchor:
   IPCIDR: &IPCIDR
-    {type: http, behavior: ipcidr, format: mrs, interval: 3600}
+    {type: http, behavior: ipcidr, format: mrs, interval: 3600, proxy: Proxy}
   Domain: &Domain
-    {type: http, behavior: domain, format: mrs, interval: 3600}
+    {type: http, behavior: domain, format: mrs, interval: 3600, proxy: Proxy}
   Classical: &Classical 
-    {type: http, behavior: classical, format: yaml, interval: 3600}
+    {type: http, behavior: classical, format: yaml, interval: 3600, proxy: Proxy}
 # —————————
 rule-providers:
   Private_域:
     <<: *Domain
     path: ./rule_provider/Private_域.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_private/domain_private_domain.mrs"
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/private.mrs"
   Private_IP:
     <<: *IPCIDR
     path: ./rule_provider/Private_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_private/ipcidr_private_ipcidr.mrs"
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/privateip.mrs"
     
   AD_域:
     <<: *Domain
@@ -259,9 +250,9 @@ rule-providers:
     path: ./rule_provider/AD_IP.mrs
     url: "https://cdn.jsdelivr.net/gh/xndeye/rule-merger@release/reject@ip.mrs"        
   WebRTC:
-    <<: *Domain
-    path: ./rule_provider/WebRTC.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/webrtc/webrtc_domain.mrs"        
+    <<: *Classical
+    path: ./rule_provider/WebRTC.yaml
+    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/webrtc.yaml"        
     
   AI:
     <<: *Domain
@@ -275,26 +266,30 @@ rule-providers:
   GoogleFCM:
     <<: *Domain 
     path: ./rule_provider/GoogleFCM.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_googlefcm/domain_googlefcm_domain.mrs" 
-    
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/googlefcm.mrs" 
+  
+  YouTube:
+    <<: *Domain
+    path: ./rule_provider/YouTube.mrs
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/youtube.mrs"
   Google_域:
     <<: *Domain
     path: ./rule_provider/Google.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_google/domain_google_domain.mrs"
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/google.mrs"
   Google_IP:
     <<: *IPCIDR
     path: ./rule_provider/Google_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/ipcidr_google/ipcidr_google_ipcidr.mrs"
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/google.mrs"
 
-  Telegram_IP:
-     <<: *IPCIDR
-     path: ./rule_provider/Telegram_IP.mrs
-     url: "https://fastly.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Telegram/Telegram_ipcidr.mrs"  
+  Telegram:
+    <<: *Domain
+    path: ./rule_provider/Telegram.mrs
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/telegram.mrs"  
      
   Speedtest:
     <<: *Domain
     path: ./rule_provider/Speedtest.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_speedtest/domain_speedtest_domain.mrs"  
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs"  
     
   Nodeseek:
     <<: *Classical 
@@ -304,16 +299,16 @@ rule-providers:
   Direct_IP:
     <<: *IPCIDR
     path: ./rule_provider/Direct_IP.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct@ip.mrs"
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/cnip.mrs"
   Direct_域:
     <<: *Domain
     path: ./rule_provider/Direct_域.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/direct.mrs"
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/cn.mrs"
     
   Fake-IP-Filter:
     <<: *Domain
     path: ./rule_provider/Fake-IP-Filter.mrs
-    url: "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/domain_fake-ip-filter/domain_fake-ip-filter_domain.mrs"   
+    url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/fakeip-filter.mrs"   
 # —————————
 rules:
   - DST-PORT,53,🌐 DNS劫持
@@ -321,17 +316,23 @@ rules:
 
   - OR,((RULE-SET,Private_域),(RULE-SET,Private_IP,no-resolve)),🌐 國內直連
   
-  - PROCESS-NAME,sub_store_node,訂閱更新
-
-  - OR,((RULE-SET,AD_域),(RULE-SET,AD_IP),(DST-PORT,3478),(DST-PORT,19302),(RULE-SET,WebRTC)),⛔️ 禁止連接
+  - PROCESS-NAME,sub_store_node,🌐 國內直連
+  
+  - DOMAIN-SUFFIX,pool.ntp.org,🌐 國內直連
+  
+  - OR,((PROCESS-NAME-WILDCARD,*smartfeed*),(DOMAIN-KEYWORD,taboola)),Proxy
+  
+  - OR,((RULE-SET,AD_域),(RULE-SET,AD_IP,no-resolve),(RULE-SET,WebRTC)),⛔️ 禁止連接
 
   - OR,((RULE-SET,AI),(RULE-SET,Claude)),AI
 
   - OR,((DST-PORT,5228),(RULE-SET,GoogleFCM)),GoogleFCM
+
+  - RULE-SET,YouTube,YouTube 
   
   - OR,((RULE-SET,Google_域),(RULE-SET,Google_IP,no-resolve)),Google
 
-  - OR,((PROCESS-NAME-WILDCARD,*telegram*),(RULE-SET,Telegram_IP,no-resolve)),Telegram 
+  - OR,((PROCESS-NAME-WILDCARD,*telegram*),(RULE-SET,Telegram)),Telegram 
 
   - RULE-SET,Nodeseek,Nodeseek
   
