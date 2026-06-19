@@ -1,0 +1,35 @@
+name: Sync AI Domain Rules
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 北京时间每天上午 10:00 自动运行（UTC 2:00）
+  workflow_dispatch:    # 支持在 Actions 页面手动点击按钮立即同步
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 赋予工作流向你仓库写入文件的权限
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download File from Upstream
+      run: |
+        # 使用 curl 下载原作者的 ai_domain.mrs 文件并保存到你仓库的根目录下
+        curl -L -o "ai_domain.mrs" "https://github.com/milangree/rules/raw/refs/heads/main/rules/mihomo/ai/ai_domain.mrs"
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 检查文件是否有变化，有变化则提交
+        git add ai_domain.mrs
+        if git diff --staged --quiet; then
+          echo "文件没有变化，无需更新。"
+        else
+          git commit -m "自动同步：Mihomo AI 规则文件已更新"
+          git push
+        fi
