@@ -1,4 +1,4 @@
-name: Sync AI Rules
+name: Sync Mihomo Rules
 
 on:
   schedule:
@@ -22,19 +22,22 @@ jobs:
         
         # 同步 AI IP-CIDR 规则
         curl -L -o "ai_ipcidr.mrs" "https://github.com/milangree/rules/raw/refs/heads/main/rules/mihomo/ai/ai_ipcidr.mrs"
+        
+        # 同步 WebRTC 域名规则
+        curl -L -o "Webrtc_domain.mrs" "https://github.com/milangree/rules/raw/refs/heads/main/rules/mihomo/Webrtc/Webrtc_domain.mrs"
 
     - name: Commit and Push Changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # 把两个文件都添加到暂存区
-        git add ai_domain.mrs ai_ipcidr.mrs
+        # 把三个文件都添加到暂存区
+        git add ai_domain.mrs ai_ipcidr.mrs Webrtc_domain.mrs
         
-        # 检查是否有任何一个文件发生变化
+        # 检查是否有任何文件发生变化
         if git diff --staged --quiet; then
           echo "文件没有变化，无需更新。"
         else
-          git commit -m "自动同步：Mihomo AI 规则文件（Domain & IPCIDR）已更新"
+          git commit -m "自动同步：Mihomo 规则文件（AI & WebRTC）已更新"
           git push
         fi
