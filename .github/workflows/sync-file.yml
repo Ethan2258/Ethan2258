@@ -1,9 +1,9 @@
-name: Sync AI Domain Rules
+name: Sync AI Rules
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 北京时间每天上午 10:00 自动运行（UTC 2:00）
-  workflow_dispatch:    # 支持在 Actions 页面手动点击按钮立即同步
+    - cron: '0 2 * * *' # 北京时间每天上午 10:00 自动运行
+  workflow_dispatch:    # 支持手动点击按钮立即同步
 
 jobs:
   sync:
@@ -15,21 +15,26 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Download File from Upstream
+    - name: Download Files from Upstream
       run: |
-        # 使用 curl 下载原作者的 ai_domain.mrs 文件并保存到你仓库的根目录下
+        # 同步 AI 域名规则
         curl -L -o "ai_domain.mrs" "https://github.com/milangree/rules/raw/refs/heads/main/rules/mihomo/ai/ai_domain.mrs"
+        
+        # 同步 AI IP-CIDR 规则
+        curl -L -o "ai_ipcidr.mrs" "https://github.com/milangree/rules/raw/refs/heads/main/rules/mihomo/ai/ai_ipcidr.mrs"
 
     - name: Commit and Push Changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # 检查文件是否有变化，有变化则提交
-        git add ai_domain.mrs
+        # 把两个文件都添加到暂存区
+        git add ai_domain.mrs ai_ipcidr.mrs
+        
+        # 检查是否有任何一个文件发生变化
         if git diff --staged --quiet; then
           echo "文件没有变化，无需更新。"
         else
-          git commit -m "自动同步：Mihomo AI 规则文件已更新"
+          git commit -m "自动同步：Mihomo AI 规则文件（Domain & IPCIDR）已更新"
           git push
         fi
