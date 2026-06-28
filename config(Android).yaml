@@ -3,7 +3,7 @@ mixed-port: 7890
 redir-port: 9797
 tproxy-port: 9898
 ipv6: true
-lgbm-url: "https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model-large.bin"
+lgbm-url: "https://v6.gh-proxy.org/https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model-large.bin"
 allow-lan: true
 bind-address: "*" 
 geodata-loader: mem
@@ -13,21 +13,21 @@ geox-url:
   asn: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb"
 unified-delay: true
 tcp-concurrent: true
-tcp-keep-alive-idle: 15
+tcp-keep-alive-idle: 30
 tcp-keep-alive-interval: 15
 log-level: error
-find-process-mode: strict
-external-controller: 0.0.0.0:9090 
-external-ui-url: "https://github.com/musiyun124/zashboard/archive/refs/heads/gh-pages-no-fonts.zip"
-external-ui: "./webroot/Zash/"
+find-process-mode: always
+external-controller: 127.0.0.1:9090
+external-ui-url: "https://v6.gh-proxy.org/https://github.com/musiyun124/zashboard/archive/refs/heads/gh-pages-no-fonts.zip"
+external-ui: ./dashboard
 # —————————
 P: &p
   type: http
   interval: 1800
   health-check:
     enable: true
-    url: "http://1.1.1.1/generate_204"
-    interval: 300
+    url: "https://www.google.com/generate_204"
+    interval: 600
   proxy: Direct
   header: 
       User-Agent:  
@@ -38,56 +38,46 @@ ntp:
   write-to-system: true
   server: pool.ntp.org
   port: 123
-  interval: 5
+  interval: 30
 # —————————
 A: &A
-  url: "http://1.1.1.1/generate_204"
-  interval: 300
+  url: "https://www.google.com/generate_204"
+  interval: 600
   use:
-  - Turing
-  - Sub
-  - Dragonfly
+  - Turing🌋
+  - Sub☄️
+  - Dragonfly🦋
 All: &All
   type: smart
-  url: "http://1.1.1.1/generate_204"
-  interval: 300
+  url: "https://www.google.com/generate_204"
+  interval: 600
   uselightgbm: true      
   sample-rate: 1
   prefer-asn: true
-  tolerance: 3
+  tolerance: 10
   use:
-  - Turing
-  - Sub
-  - Dragonfly
-Sub: &Sub
-  type: smart
-  url: "http://1.1.1.1/generate_204"
-  interval: 300
-  uselightgbm: true      
-  sample-rate: 1
-  prefer-asn: true
-  tolerance: 3
-  use:
-  - Sub
+  - Turing🌋
+  - Sub☄️
+  - Dragonfly🦋
 proxy-providers: 
-  Turing:
+  Turing🌋:
     <<: *p
     override:
-      additional-prefix: "Turing: "
+      additional-prefix: "🌋: "
       udp: true
     path: ./proxy_provider/Turing.yaml
-    url: "http://127.0.0.1:3000/download/Turing"
-  Dragonfly:
+    url: "http://127.0.0.1:3000/download/Gomami Turing"
+  Dragonfly🦋:
     <<: *p
     override:
-      additional-prefix: "Dragonfly: "
+      additional-prefix: "🦋: "
       udp: true
     path: ./proxy_provider/Dragonfly.yaml
     url: "http://127.0.0.1:3000/download/Dragonfly"  
-  Sub:
+  Sub☄️:
     <<: *p
     override:
-      additional-prefix: "Sub: "
+      additional-prefix: "☄️: "
       udp: true
     path: ./proxy_provider/Sub.yaml
     url: "http://127.0.0.1:3000/download/collection/Sub"  
@@ -105,7 +95,7 @@ sniffer:
       ports: [80, 8080-8880]
       override-destination: true 
     TLS:
-      ports: [443, 5228, 5229, 5230, 8443]   
+      ports: [443, 5228, 8443]   
     QUIC:
       ports: [443, 8443]
 # —————————
@@ -113,31 +103,33 @@ dns:
   enable: true
   cache-algorithm: arc
   ipv6: true
-  prefer-h3: true
+  respect-rules: true
   listen: 0.0.0.0:1053
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
-  fake-ip-range6: fdfe:dcba:9876::1/64
+  fake-ip-range6: fc00::/18
   fake-ip-filter-mode: rule
   fake-ip-filter:
     - RULE-SET,GoogleFCM,real-ip
+    - RULE-SET,Google,fake-ip
     - RULE-SET,Fake-IP-Filter,real-ip
     - RULE-SET,Private,real-ip
-    - RULE-SET,Google,fake-ip
-    - RULE-SET,Direct,real-ip
+    - RULE-SET,CN,real-ip
   direct-nameserver:
     - 127.0.0.1:1451
   proxy-server-nameserver:
     - 127.0.0.1:1451
   nameserver-policy:
-    "rule-set:Direct,Private,Fake-IP-Filter":
+    "rule-set:CN,Private,Fake-IP-Filter,GoogleFCM": 
       - 127.0.0.1:1451
+    "rule-set:YouTube": 
+      - https://dns.google/dns-query
   nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
+    - 8.8.8.8
+    - 9.9.9.9  
 # —————————
 proxies:
-  - {name: 🌐 國內直連, type: direct, udp: true, ip-version: ipv6-prefer}
+  - {name: 🌐 國內直連, type: direct, udp: true}
   - {name: ⛔️ 禁止連接, type: reject}
   - {name: 🌐 DNS劫持, type: dns}
 # —————————
@@ -149,7 +141,7 @@ proxy_groups: &proxy_groups
       - Sub HK
       - Sub TW
       - Singapore
-      - Europe
+      - Sub Europe
     <<: *A
 # —————————
 proxy-groups:
@@ -160,7 +152,9 @@ proxy-groups:
       - Sub HK
       - Sub TW
       - Singapore
-      - Europe
+      - Sub Europe
+    <<: *All
+    filter: "^(?=.*(🇺🇸)).*$"
   - name: Direct
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Direct.png"
     type: url-test
@@ -186,14 +180,17 @@ proxy-groups:
   - name: YouTube
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png"
     <<: *proxy_groups 
+  - name: GitHub 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png"
+    <<: *proxy_groups     
   - name: Sub HK
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
     filter: "^(?=.*(HKT)).*$"
-    <<: *Sub
+    <<: *All
   - name: Sub TW
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
     filter: "^(?=.*(Seednet|HiNet)).*$"
-    <<: *Sub
+    <<: *All
   - name: Hong Kong
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
     filter: "^(?=.*(🇭🇰))(?!.*(HKT)).*$"
@@ -201,6 +198,10 @@ proxy-groups:
   - name: Singapore
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Singapore.png"
     filter: "^(?=.*(🇸🇬)).*$"
+    <<: *All
+  - name: Sub Europe
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
+    filter: "^(?=.*(🇳🇱)).*$"
     <<: *All
   - name: Europe
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/European_Union.png"
@@ -212,8 +213,6 @@ rule-anchor:
     {type: http, behavior: ipcidr, format: mrs, interval: 3600}
   Domain: &Domain
     {type: http, behavior: domain, format: mrs, interval: 3600}
-  Classical: &Classical 
-    {type: http, behavior: classical, format: yaml, interval: 3600}
 # —————————
 rule-providers:
   Private:
@@ -228,34 +227,35 @@ rule-providers:
   AD:
     <<: *Domain
     path: ./rule_provider/AD.mrs
-    url: "https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs" 
+    url: "https://gcore.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs" 
   AD_IP:
     <<: *IPCIDR
     path: ./rule_provider/AD_IP.mrs
     url: "https://cdn.jsdelivr.net/gh/xndeye/rule-merger@release/reject@ip.mrs"        
   WebRTC:
-    <<: *Classical
+    <<: *Domain
     path: ./rule_provider/WebRTC.yaml
-    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/webrtc.yaml"        
-
-  Claude:
-    <<: *Classical 
-    path: ./rule_provider/Claude.yaml
-    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/Claude.yaml"      
+    url: "https://cdn.jsdelivr.net/gh/musiyun124/mihomo@main/rules/WebRTC.mrs"        
+    
   AI:
     <<: *Domain
     path: ./rule_provider/AI.mrs
-    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/ai.mrs"
+    url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/ai.mrs"      
+  AI_IP:
+    <<: *IPCIDR
+    path: ./rule_provider/AI_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/ai_ipcidr.mrs"
     
   GoogleFCM:
     <<: *Domain 
     path: ./rule_provider/GoogleFCM.mrs
     url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/googlefcm.mrs" 
-  
+    
   YouTube:
     <<: *Domain
     path: ./rule_provider/YouTube.mrs
     url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/youtube.mrs"
+      
   Google:
     <<: *Domain
     path: ./rule_provider/Google.mrs
@@ -287,13 +287,18 @@ rule-providers:
   NodeSeek:
     <<: *Domain
     path: ./rule_provider/Nodeseek.mrs
-    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs"  
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs" 
     
-  Direct_IP:
+  GitHub:
+    <<: *Domain
+    path: ./rule_provider/GitHub.mrs
+    url: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs" 
+        
+  CN_IP:
     <<: *IPCIDR
     path: ./rule_provider/Direct_IP.mrs
     url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/cnip.mrs"
-  Direct:
+  CN:
     <<: *Domain
     path: ./rule_provider/Direct.mrs
     url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/cn.mrs"
@@ -304,13 +309,13 @@ rule-providers:
     url: "https://fastly.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/fakeip-filter.mrs"   
 # —————————
 rules:
-  - DST-PORT,53/853,🌐 DNS劫持
+  - DST-PORT,53,🌐 DNS劫持
 
   - OR,((RULE-SET,Private),(RULE-SET,Private_IP,no-resolve),(PROCESS-NAME,sub_store_node),(DOMAIN-SUFFIX,pool.ntp.org)),Direct
   
   - OR,((RULE-SET,AD),(RULE-SET,AD_IP,no-resolve),(RULE-SET,WebRTC)),⛔️ 禁止連接
 
-  - OR,((RULE-SET,Claude),(RULE-SET,AI)),AI
+  - OR,((RULE-SET,AI),(RULE-SET,AI_IP,no-resolve)),AI
 
   - OR,((DST-PORT,5228-5230),(RULE-SET,GoogleFCM)),Direct
   
@@ -320,15 +325,15 @@ rules:
   
   - RULE-SET,Speedtest,Speedtest
   
-  - RULE-SET,YouTube,YouTube 
+  - RULE-SET,GitHub,GitHub 
+  
+  - PROCESS-NAME,com.google.android.youtube,YouTube
   
   - OR,((RULE-SET,Google),(RULE-SET,Google_IP,no-resolve)),Proxy 
 
-  - OR,((RULE-SET,Telegram_IP),(RULE-SET,Telegram)),Telegram 
+  - OR,((RULE-SET,Telegram_IP,no-resolve),(RULE-SET,Telegram)),Telegram 
 
-  - OR,((RULE-SET,Direct),(RULE-SET,Direct_IP,no-resolve)),Direct
+  - OR,((RULE-SET,CN),(RULE-SET,CN_IP,no-resolve)),Direct
   
   - MATCH,Proxy
 # —————————
- 
-
