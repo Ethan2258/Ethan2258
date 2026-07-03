@@ -31,7 +31,7 @@ P: &p
   proxy: Direct
   header: 
       User-Agent:  
-        - "ClashMetaForAndroid/v2.11.27"
+        - "ClashMetaForAndroid/v2.11.29"
 # —————————
 ntp:
   enable: true
@@ -46,7 +46,6 @@ A: &A
   use:
   - Turing🌋
   - Sub☄️
-  - Dragonfly🦋
 All: &All
   type: smart
   url: "https://www.google.com/generate_204"
@@ -58,7 +57,6 @@ All: &All
   use:
   - Turing🌋
   - Sub☄️
-  - Dragonfly🦋
 proxy-providers: 
   Turing🌋:
     <<: *p
@@ -66,14 +64,7 @@ proxy-providers:
       additional-prefix: "🌋: "
       udp: true
     path: ./proxy_provider/Turing.yaml
-    url: "http://127.0.0.1:3000/download/Gomami Turing"
-  Dragonfly🦋:
-    <<: *p
-    override:
-      additional-prefix: "🦋: "
-      udp: true
-    path: ./proxy_provider/Dragonfly.yaml
-    url: "http://127.0.0.1:3000/download/Dragonfly"  
+    url: "http://127.0.0.1:3000/download/🌋 Turing"
   Sub☄️:
     <<: *p
     override:
@@ -120,13 +111,13 @@ dns:
   proxy-server-nameserver:
     - 127.0.0.1:1451
   nameserver-policy:
+    "rule-set:AD,WebRTC":
+      - rcode://success
     "rule-set:CN,Private,Fake-IP-Filter,GoogleFCM": 
       - 127.0.0.1:1451
-    "rule-set:YouTube": 
-      - https://dns.google/dns-query
   nameserver:
-    - 8.8.8.8
-    - 9.9.9.9  
+    - https://8.8.8.8:443/dns-query#h3=true
+    - https://9.9.9.9:443/dns-query#h3=true   
 # —————————
 proxies:
   - {name: 🌐 國內直連, type: direct, udp: true}
@@ -153,8 +144,6 @@ proxy-groups:
       - Sub TW
       - Singapore
       - Sub Europe
-    <<: *All
-    filter: "^(?=.*(🇺🇸)).*$"
   - name: Direct
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Direct.png"
     type: url-test
@@ -183,9 +172,12 @@ proxy-groups:
   - name: GitHub 
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png"
     <<: *proxy_groups     
+  - name: Google 
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png"
+    <<: *proxy_groups     
   - name: Sub HK
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Hong_Kong.png"
-    filter: "^(?=.*(HKT)).*$"
+    filter: "^(?=.*(🇭🇰)).*$"
     <<: *All
   - name: Sub TW
     icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Taiwan.png"
@@ -241,10 +233,6 @@ rule-providers:
     <<: *Domain
     path: ./rule_provider/AI.mrs
     url: "https://fastly.jsdelivr.net/gh/xndeye/rule-merger@release/ai.mrs"      
-  AI_IP:
-    <<: *IPCIDR
-    path: ./rule_provider/AI_IP.mrs
-    url: "https://cdn.jsdelivr.net/gh/Ethan2258/Ethan2258@main/ai_ipcidr.mrs"
     
   GoogleFCM:
     <<: *Domain 
@@ -311,11 +299,11 @@ rule-providers:
 rules:
   - DST-PORT,53,🌐 DNS劫持
 
-  - OR,((RULE-SET,Private),(RULE-SET,Private_IP,no-resolve),(PROCESS-NAME,sub_store_node),(DOMAIN-SUFFIX,pool.ntp.org)),Direct
+  - OR,((RULE-SET,Private),(RULE-SET,Private_IP,no-resolve),(DOMAIN-SUFFIX,pool.ntp.org)),Direct
   
   - OR,((RULE-SET,AD),(RULE-SET,AD_IP,no-resolve),(RULE-SET,WebRTC)),⛔️ 禁止連接
 
-  - OR,((RULE-SET,AI),(RULE-SET,AI_IP,no-resolve)),AI
+  - RULE-SET,AI,AI
 
   - OR,((DST-PORT,5228-5230),(RULE-SET,GoogleFCM)),Direct
   
@@ -329,7 +317,7 @@ rules:
   
   - PROCESS-NAME,com.google.android.youtube,YouTube
   
-  - OR,((RULE-SET,Google),(RULE-SET,Google_IP,no-resolve)),Proxy 
+  - OR,((RULE-SET,Google),(RULE-SET,Google_IP,no-resolve)),Google
 
   - OR,((RULE-SET,Telegram_IP,no-resolve),(RULE-SET,Telegram)),Telegram 
 
