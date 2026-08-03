@@ -1,16 +1,9 @@
-<h1 align="center">Hi, I'm Ethan</h1>
-
-<p align="center">Android 系统折腾、Magisk / LSPosed 与 Mihomo 网络配置</p>
+<h1 align="center">Mihomo</h1>
 
 <p align="center">
   <a href="https://github.com/Ethan2258/Ethan2258/actions/workflows/validate.yml"><img alt="Validate repository" src="https://github.com/Ethan2258/Ethan2258/actions/workflows/validate.yml/badge.svg"></a>
   <a href="https://github.com/Ethan2258/Ethan2258/actions/workflows/sync-file.yml"><img alt="Sync Mihomo rules" src="https://github.com/Ethan2258/Ethan2258/actions/workflows/sync-file.yml/badge.svg"></a>
 </p>
-
-## 关于我
-
-- 关注 Android、Magisk、LSPosed、透明代理与 IPv4 / IPv6。
-- 这个仓库也是我的 Mihomo 配置与规则文件分发地址。
 
 ## Mihomo 配置
 
@@ -37,13 +30,6 @@
 | [`Nodeseek.yaml`](./Nodeseek.yaml) / [`nodeseek.png`](./nodeseek.png) | NodeSeek 备用规则与图标 | 否 |
 
 > 当前配置的 AI 与 NodeSeek 规则来自外部 MRS；仓库内的 `ai_*.mrs` 和 `Nodeseek.yaml` 是独立镜像或备用文件。
-
-## 使用提醒
-
-1. 把两个 `proxy-providers` 的本地 URL 换成自己的 Sub-Store 或订阅地址。
-2. 确认节点名称能匹配配置中的地区旗帜、`0x`、`seed` 等过滤条件。
-3. Android 用户需确保 `127.0.0.1:1451` 有可用 DNS，或自行替换相关设置。
-4. 不要向公开仓库提交私人订阅、Token 或控制器密钥；正式使用前请先用近期 Mihomo 版本测试。
 
 ## 自动维护
 
