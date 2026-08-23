@@ -73,6 +73,7 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
     seen: set[str] = set()
     domain_types = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "HOST", "HOST-SUFFIX"}
     ip_types = {"IP-CIDR", "IP-CIDR6", "IP-ASN"}
+    known_types = domain_types | ip_types
     accepted = domain_types if kind == "domain" else ip_types
 
     for line_number, raw_line in enumerate(text.splitlines(), 1):
@@ -83,6 +84,8 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
         if len(fields) < 2:
             raise ValueError(f"line {line_number}: expected a Loon rule with a value")
         rule_type, value = fields[0].upper(), fields[1]
+        if rule_type not in known_types:
+            raise ValueError(f"line {line_number}: unsupported rule type {rule_type}")
         if rule_type not in accepted:
             continue
         if not value:
