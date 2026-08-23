@@ -81,7 +81,7 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
         if not value:
             raise ValueError(f"line {line_number}: empty rule value")
         if kind == "classical":
-            normalized = ", ".join([rule_type, value, *fields[2:]]).rstrip(", ")
+            normalized = ", ".join([rule_type, value])
         else:
             normalized = value
         if normalized not in seen:
