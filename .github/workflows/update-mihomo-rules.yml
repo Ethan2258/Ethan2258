@@ -31,7 +31,7 @@ jobs:
 
       - name: Commit updated MRS files
         run: |
-          if git diff --quiet -- SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs; then
+          if ! git status --porcelain -- SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs | grep -q .; then
             echo "Mihomo rule files are already up to date."
             exit 0
           fi
