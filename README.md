@@ -5,7 +5,8 @@ Mihomo / Egern 规则文件与相关资源。
 ## 文件
 
 - `Nodeseek.yaml`：NodeSeek 域名规则，适用于 Egern。
-- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。`n- `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
+- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。
+- `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
 - `TelegramNL.mrs`：Telegram NL IP 网段规则。
 - `telegram_nl.yaml`、`telegram_sg.yaml`：Telegram IP/ASN YAML 规则。
@@ -16,7 +17,8 @@ Mihomo / Egern 规则文件与相关资源。
 ## 规则链接
 
 - [Nodeseek.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/Nodeseek.yaml)
-- [SpeedtestInternational.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational.mrs)`n- [SpeedtestInternational_ipcidr.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational_ipcidr.mrs)
+- [SpeedtestInternational.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational.mrs)
+- [SpeedtestInternational_ipcidr.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational_ipcidr.mrs)
 - [TelegramSG.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramSG.mrs)
 - [TelegramNL.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramNL.mrs)
 - [telegram_nl.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/telegram_nl.yaml)
