@@ -14,25 +14,32 @@ ROOT = Path(__file__).resolve().parents[2]
 USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
+MIRROR_COMMIT = "ab6c3182fb2b09bcc34456f496282ec0b8e9217b"
 
 SOURCES = (
     {
         "output": "SpeedtestInternational.mrs",
-        "kind": "classical",
+        "kind": "domain",
         "url": "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/Lsr/SpeedtestInternational.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/Lsr/SpeedtestInternational.lsr",
+    },
+    {
+        "output": "SpeedtestInternational_ipcidr.mrs",
+        "kind": "ipcidr",
+        "url": "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/Lsr/SpeedtestInternational.lsr",
     },
     {
         "output": "TelegramSG.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramSG.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/TelegramSG.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/TelegramSG.lsr",
     },
     {
         "output": "TelegramNL.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramNL.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/TelegramNL.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/TelegramNL.lsr",
     },
 )
 
@@ -66,7 +73,7 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
     seen: set[str] = set()
     domain_types = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "HOST", "HOST-SUFFIX"}
     ip_types = {"IP-CIDR", "IP-CIDR6", "IP-ASN"}
-    accepted = domain_types | ip_types if kind == "classical" else ip_types
+    accepted = domain_types if kind == "domain" else ip_types
 
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         line = raw_line.split("#", 1)[0].strip()
@@ -77,19 +84,15 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
             raise ValueError(f"line {line_number}: expected a Loon rule with a value")
         rule_type, value = fields[0].upper(), fields[1]
         if rule_type not in accepted:
-            raise ValueError(f"line {line_number}: unsupported {kind} rule type {rule_type}")
+            continue
         if not value:
             raise ValueError(f"line {line_number}: empty rule value")
-        if kind == "classical":
-            normalized = ", ".join([rule_type, value])
-        else:
-            normalized = value
-        if normalized not in seen:
-            entries.append(normalized)
-            seen.add(normalized)
+        if value not in seen:
+            entries.append(value)
+            seen.add(value)
 
     if not entries:
-        raise ValueError("source contains no supported rules")
+        raise ValueError(f"source contains no {kind} rules")
     return entries
 
 
