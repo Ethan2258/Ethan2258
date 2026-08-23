@@ -21,19 +21,19 @@ SOURCES = (
         "output": "SpeedtestInternational.mrs",
         "kind": "domain",
         "url": "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/main/Rule/Lsr/SpeedtestInternational.lsr",
+        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/Lsr/SpeedtestInternational.lsr",
     },
     {
         "output": "TelegramSG.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramSG.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/main/Rule/TelegramSG.lsr",
+        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/TelegramSG.lsr",
     },
     {
         "output": "TelegramNL.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramNL.lsr",
-        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/main/Rule/TelegramNL.lsr",
+        "fallback": "https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/ab6c3182fb2b09bcc34456f496282ec0b8e9217b/Rule/TelegramNL.lsr",
     },
 )
 
