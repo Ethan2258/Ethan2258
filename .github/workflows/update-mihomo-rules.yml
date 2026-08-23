@@ -1,0 +1,42 @@
+name: Update Mihomo rules
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-mihomo-rules
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Download and convert Loon rules
+        run: python .github/scripts/update_lsr_rules.py
+
+      - name: Commit updated MRS files
+        run: |
+          if git diff --quiet -- SpeedtestInternational.mrs TelegramSG.mrs TelegramNL.mrs; then
+            echo "Mihomo rule files are already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SpeedtestInternational.mrs TelegramSG.mrs TelegramNL.mrs
+          git commit -m "chore: update Mihomo rule files"
+          git push
