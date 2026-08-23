@@ -99,6 +99,22 @@ def validate_repository_urls(path: Path, errors: list[str]) -> None:
             )
 
 
+def validate_domain_set(path: Path, config: Any, errors: list[str]) -> None:
+    if not isinstance(config, dict) or set(config) != {"payload"}:
+        errors.append(f"{relative(path)}: expected only a top-level payload key")
+        return
+
+    payload = config["payload"]
+    if not isinstance(payload, list) or not payload:
+        errors.append(f"{relative(path)}: payload must be a non-empty list")
+        return
+    invalid_entries = [entry for entry in payload if not isinstance(entry, str) or not entry]
+    if invalid_entries:
+        errors.append(f"{relative(path)}: payload entries must be non-empty strings")
+    elif len(payload) != len(set(payload)):
+        errors.append(f"{relative(path)}: payload contains duplicate entries")
+
+
 def validate_mrs_files(errors: list[str]) -> None:
     for path in sorted(ROOT.glob("*.mrs")):
         if path.stat().st_size <= len(MRS_MAGIC):
@@ -117,6 +133,8 @@ def main() -> int:
     loaded = {path: load_yaml(path, errors) for path in yaml_files}
     for path in CONFIG_FILES:
         config = loaded.get(path)
+        if path.name == "Nodeseek.yaml":
+            validate_domain_set(path, config, errors)
         if isinstance(config, dict) and any(
             key in config for key in ("rule-providers", "rules", "dns")
         ):

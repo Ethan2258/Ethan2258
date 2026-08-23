@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 import stat
 import subprocess
 import tempfile
@@ -15,6 +16,13 @@ USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
 MIRROR_BRANCH = "Loon"
+DOMAIN_SET_ENTRY = re.compile(
+    r"^(?:\+\.)?(?:[A-Za-z0-9_*-]+\.)+[A-Za-z0-9_*-]+$"
+)
+NODESEEK_SOURCES = (
+    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/nodeseek.mrs",
+)
 
 SOURCES = (
     {
@@ -58,8 +66,12 @@ def fetch(url: str) -> bytes:
 
 
 def download_source(source: dict[str, str]) -> tuple[bytes, str]:
+    return download_first((source["url"], source["fallback"]))
+
+
+def download_first(urls: tuple[str, ...]) -> tuple[bytes, str]:
     failures: list[str] = []
-    for url in (source["url"], source["fallback"]):
+    for url in urls:
         try:
             return fetch(url), url
         except (OSError, urllib.error.URLError, RuntimeError) as error:
@@ -135,10 +147,51 @@ def convert(binary: Path, input_path: Path, output_path: Path, kind: str) -> Non
         raise RuntimeError(f"{output_path.name}: converter did not produce a valid MRS file")
 
 
+def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> None:
+    command = [
+        str(binary),
+        "convert-ruleset",
+        kind,
+        "mrs",
+        str(input_path),
+        str(output_path),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"Mihomo MRS decoding failed: {detail}")
+    if not output_path.is_file() or not output_path.read_text(encoding="utf-8").strip():
+        raise RuntimeError(f"{input_path.name}: converter produced an empty rule list")
+
+
+def update_nodeseek(binary: Path, workspace: Path) -> None:
+    data, used_url = download_first(NODESEEK_SOURCES)
+    if data[:4] != MRS_MAGIC:
+        raise RuntimeError("nodeseek.mrs: source has an invalid MRS/Zstandard header")
+
+    input_path = workspace / "nodeseek.mrs"
+    output_path = workspace / "nodeseek.txt"
+    input_path.write_bytes(data)
+    decode_mrs(binary, input_path, output_path, "domain")
+
+    decoded_lines = output_path.read_text(encoding="utf-8").splitlines()
+    entries = list(dict.fromkeys(line.strip() for line in decoded_lines if line.strip()))
+    if any(not DOMAIN_SET_ENTRY.fullmatch(entry) for entry in entries):
+        raise ValueError(
+            "nodeseek.mrs: source contains a rule unsupported by Egern domain-set YAML"
+        )
+    yaml_text = "payload:\n" + "".join(f"  - {entry}\n" for entry in entries)
+    temporary_output = workspace / "Nodeseek.yaml"
+    temporary_output.write_text(yaml_text, encoding="utf-8")
+    temporary_output.replace(ROOT / "Nodeseek.yaml")
+    print(f"Nodeseek.yaml: {len(entries)} rules from {used_url}")
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory(prefix="mihomo-rule-update-") as temporary:
         workspace = Path(temporary)
         binary = mihomo_binary(workspace)
+        update_nodeseek(binary, workspace)
         for source in SOURCES:
             data, used_url = download_source(source)
             entries = parse_lsr(data, source["kind"])

@@ -4,7 +4,7 @@ Mihomo / Egern 规则文件与相关资源。
 
 ## 文件
 
-- `Nodeseek.yaml`：NodeSeek 域名规则，适用于 Egern。
+- `Nodeseek.yaml`：由上游 MRS 自动转换的 NodeSeek 域名规则，适用于 Egern。
 - `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。
 - `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
@@ -27,11 +27,13 @@ Mihomo / Egern 规则文件与相关资源。
 
 ## 自动更新
 
-GitHub Actions 每天自动下载以下 Loon 规则，并转换为 Mihomo `.mrs` 文件后提交到 `main`：
+GitHub Actions 每天北京时间 `10:17` 自动下载以下 Loon 规则，并转换为 Mihomo `.mrs` 文件后提交到 `main`：
 
 - [SpeedtestInternational.lsr](https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr)
 - [TelegramSG.lsr](https://rule.kelee.one/Loon/TelegramSG.lsr)
 - [TelegramNL.lsr](https://rule.kelee.one/Loon/TelegramNL.lsr)
+
+同时从 [MetaCubeX meta-rules-dat](https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs) 拉取 NodeSeek MRS，将其转换并同步到 `Nodeseek.yaml`。
 
 Speedtest 源同时包含域名和 IP 网段，因此会拆成两个行为独立的 MRS 文件；源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
