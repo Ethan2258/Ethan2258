@@ -31,12 +31,12 @@ jobs:
 
       - name: Commit updated MRS files
         run: |
-          if git diff --quiet -- SpeedtestInternational.mrs TelegramSG.mrs TelegramNL.mrs; then
+          if git diff --quiet -- SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs; then
             echo "Mihomo rule files are already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SpeedtestInternational.mrs TelegramSG.mrs TelegramNL.mrs
+          git add SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs
           git commit -m "chore: update Mihomo rule files"
           git push
