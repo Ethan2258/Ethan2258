@@ -9,7 +9,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG_FILES = (ROOT / "config(Android).yaml", ROOT / "config(Windows).yaml")
+CONFIG_FILES = tuple(sorted(ROOT.glob("*.yaml")))
 MRS_MAGIC = bytes.fromhex("28b52ffd")
 REPOSITORY_URL = re.compile(
     r"https://(?:cdn|fastly|gcore)\.jsdelivr\.net/gh/Ethan2258/Ethan2258@main/"
@@ -116,7 +116,11 @@ def main() -> int:
 
     loaded = {path: load_yaml(path, errors) for path in yaml_files}
     for path in CONFIG_FILES:
-        validate_rule_references(path, loaded.get(path), errors)
+        config = loaded.get(path)
+        if isinstance(config, dict) and any(
+            key in config for key in ("rule-providers", "rules", "dns")
+        ):
+            validate_rule_references(path, config, errors)
         validate_repository_urls(path, errors)
     validate_mrs_files(errors)
 
