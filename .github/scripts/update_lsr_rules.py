@@ -14,32 +14,32 @@ ROOT = Path(__file__).resolve().parents[2]
 USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
-MIRROR_COMMIT = "ab6c3182fb2b09bcc34456f496282ec0b8e9217b"
+MIRROR_BRANCH = "Loon"
 
 SOURCES = (
     {
         "output": "SpeedtestInternational.mrs",
         "kind": "domain",
         "url": "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
-        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/Lsr/SpeedtestInternational.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/Lsr/SpeedtestInternational.lsr",
     },
     {
         "output": "SpeedtestInternational_ipcidr.mrs",
         "kind": "ipcidr",
         "url": "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
-        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/Lsr/SpeedtestInternational.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/Lsr/SpeedtestInternational.lsr",
     },
     {
         "output": "TelegramSG.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramSG.lsr",
-        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/TelegramSG.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/TelegramSG.lsr",
     },
     {
         "output": "TelegramNL.mrs",
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramNL.lsr",
-        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_COMMIT}/Rule/TelegramNL.lsr",
+        "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/TelegramNL.lsr",
     },
 )
 
