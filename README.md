@@ -5,7 +5,7 @@ Mihomo / Egern 规则文件与相关资源。
 ## 文件
 
 - `Nodeseek.yaml`：NodeSeek 域名规则，适用于 Egern。
-- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。`
+- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。`n- `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
 - `TelegramNL.mrs`：Telegram NL IP 网段规则。
 - `telegram_nl.yaml`、`telegram_sg.yaml`：Telegram IP/ASN YAML 规则。
