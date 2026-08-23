@@ -5,7 +5,7 @@ Mihomo / Egern 规则文件与相关资源。
 ## 文件
 
 - `Nodeseek.yaml`：NodeSeek 域名规则，适用于 Egern。
-- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。
+- `SpeedtestInternational.mrs`：国际 Speedtest 域名规则。`
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
 - `TelegramNL.mrs`：Telegram NL IP 网段规则。
 - `telegram_nl.yaml`、`telegram_sg.yaml`：Telegram IP/ASN YAML 规则。
@@ -16,7 +16,7 @@ Mihomo / Egern 规则文件与相关资源。
 ## 规则链接
 
 - [Nodeseek.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/Nodeseek.yaml)
-- [SpeedtestInternational.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational.mrs)
+- [SpeedtestInternational.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational.mrs)`n- [SpeedtestInternational_ipcidr.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational_ipcidr.mrs)
 - [TelegramSG.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramSG.mrs)
 - [TelegramNL.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramNL.mrs)
 - [telegram_nl.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/telegram_nl.yaml)
@@ -31,7 +31,7 @@ GitHub Actions 每天自动下载以下 Loon 规则，并转换为 Mihomo `.mrs`
 - [TelegramSG.lsr](https://rule.kelee.one/Loon/TelegramSG.lsr)
 - [TelegramNL.lsr](https://rule.kelee.one/Loon/TelegramNL.lsr)
 
-源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
+Speedtest 源同时包含域名和 IP 网段，因此会拆成两个行为独立的 MRS 文件；源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
 ## 校验
 
