@@ -30,6 +30,14 @@ WEBRTC_SOURCES = (
     "https://raw.githubusercontent.com/milangree/rules/main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
     "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
 )
+SPEEDTEST_MRS_SOURCES = (
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs",
+    "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
+)
+SPEEDTEST_SRS_SOURCES = (
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/speedtest.srs",
+    "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/speedtest.srs",
+)
 
 SOURCES = (
     {
@@ -243,6 +251,29 @@ def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> 
         raise RuntimeError(f"{input_path.name}: converter produced an empty rule list")
 
 
+def decompile_srs(binary: Path, input_path: Path, output_path: Path) -> list[dict]:
+    command = [
+        str(binary),
+        "rule-set",
+        "decompile",
+        str(input_path),
+        "-o",
+        str(output_path),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"Sing-box SRS decompilation failed: {detail}")
+    try:
+        source = json.loads(output_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"{input_path.name}: invalid decompiled rule-set: {error}") from error
+    rules = source.get("rules") if isinstance(source, dict) else None
+    if not isinstance(rules, list) or not rules or not all(isinstance(rule, dict) for rule in rules):
+        raise RuntimeError(f"{input_path.name}: decompiled rule-set contains no rules")
+    return rules
+
+
 def singbox_rule(domain: list[str] | None = None, domain_suffix: list[str] | None = None,
                  domain_keyword: list[str] | None = None, ip_cidr: list[str] | None = None) -> dict[str, list[str]]:
     rule: dict[str, list[str]] = {}
@@ -365,6 +396,36 @@ def update_webrtc(mihomo: Path, singbox: Path, workspace: Path) -> None:
     print(f"Webrtc_domain.srs: {len(entries)} rules from {used_url}")
 
 
+def speedtest_mrs_entries(mihomo: Path, workspace: Path) -> tuple[list[str], str]:
+    data, used_url = download_first(SPEEDTEST_MRS_SOURCES)
+    if data[:4] != MRS_MAGIC:
+        raise RuntimeError("speedtest.mrs: source has an invalid MRS/Zstandard header")
+    input_path = workspace / "speedtest-upstream.mrs"
+    output_path = workspace / "speedtest-upstream.txt"
+    input_path.write_bytes(data)
+    decode_mrs(mihomo, input_path, output_path, "domain")
+    entries = list(
+        dict.fromkeys(
+            line.strip()
+            for line in output_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    )
+    if any(not DOMAIN_SET_ENTRY.fullmatch(entry) for entry in entries):
+        raise ValueError("speedtest.mrs: source contains an invalid domain entry")
+    return entries, used_url
+
+
+def speedtest_srs_rules(singbox: Path, workspace: Path) -> tuple[list[dict], str]:
+    data, used_url = download_first(SPEEDTEST_SRS_SOURCES)
+    if data[:3] != SRS_MAGIC:
+        raise RuntimeError("speedtest.srs: source has an invalid Sing-box SRS header")
+    input_path = workspace / "speedtest-upstream.srs"
+    output_path = workspace / "speedtest-upstream.json"
+    input_path.write_bytes(data)
+    return decompile_srs(singbox, input_path, output_path), used_url
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory(prefix="mihomo-rule-update-") as temporary:
         workspace = Path(temporary)
@@ -377,16 +438,29 @@ def main() -> int:
             data, used_url = download_source(source)
             records = parse_lsr_records(data, source["kind"])
             entries = parse_lsr(data, source["kind"])
+            upstream_mrs_url = None
+            upstream_srs_url = None
+            upstream_srs_rules: list[dict] = []
+            if source["output"] == "SpeedtestInternational.mrs":
+                upstream_entries, upstream_mrs_url = speedtest_mrs_entries(binary, workspace)
+                entries = list(dict.fromkeys([*entries, *upstream_entries]))
+                upstream_srs_rules, upstream_srs_url = speedtest_srs_rules(singbox, workspace)
             input_path = workspace / f"{source['output']}.txt"
             temporary_output = workspace / source["output"]
             input_path.write_text("\n".join(entries) + "\n", encoding="utf-8")
             convert(binary, input_path, temporary_output, source["kind"])
             temporary_output.replace(ROOT / source["output"])
             srs_output = workspace / source["srs_output"]
-            compile_srs(singbox, records_to_srs_rules(records, source["kind"]), srs_output)
+            srs_rules = records_to_srs_rules(records, source["kind"])
+            srs_rules.extend(upstream_srs_rules)
+            compile_srs(singbox, srs_rules, srs_output)
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
-            print(f"{source['srs_output']}: {len(records)} rules from {used_url}")
+            if upstream_mrs_url:
+                print(f"  merged MRS source: {upstream_mrs_url}")
+            print(f"{source['srs_output']}: {len(records)} Loon records from {used_url}")
+            if upstream_srs_url:
+                print(f"  merged SRS source: {upstream_srs_url}")
     return 0
 
 
