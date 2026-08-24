@@ -11,6 +11,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_FILES = tuple(sorted(ROOT.glob("*.yaml")))
 MRS_MAGIC = bytes.fromhex("28b52ffd")
+SRS_MAGIC = b"SRS\x02"
 REPOSITORY_URL = re.compile(
     r"https://(?:cdn|fastly|gcore)\.jsdelivr\.net/gh/Ethan2258/Ethan2258@main/"
     r"(?P<path>[^\"'\s]+)",
@@ -126,6 +127,15 @@ def validate_mrs_files(errors: list[str]) -> None:
             errors.append(f"{relative(path)}: invalid MRS/Zstandard header")
 
 
+def validate_srs_files(errors: list[str]) -> None:
+    for path in sorted(ROOT.glob("*.srs")):
+        if path.stat().st_size <= len(SRS_MAGIC):
+            errors.append(f"{relative(path)}: file is empty or truncated")
+            continue
+        if path.read_bytes()[:4] != SRS_MAGIC:
+            errors.append(f"{relative(path)}: invalid Sing-box SRS header")
+
+
 def main() -> int:
     errors: list[str] = []
     yaml_files = sorted(ROOT.glob("*.yaml")) + sorted(
@@ -143,6 +153,7 @@ def main() -> int:
             validate_rule_references(path, config, errors)
         validate_repository_urls(path, errors)
     validate_mrs_files(errors)
+    validate_srs_files(errors)
 
     if errors:
         print("Repository validation failed:", file=sys.stderr)
@@ -153,7 +164,8 @@ def main() -> int:
     print(
         f"Validated {len(yaml_files)} YAML files, "
         f"{len(CONFIG_FILES)} Mihomo configs, and "
-        f"{len(list(ROOT.glob('*.mrs')))} MRS files."
+        f"{len(list(ROOT.glob('*.mrs')))} MRS files, and "
+        f"{len(list(ROOT.glob('*.srs')))} SRS files."
     )
     return 0
 

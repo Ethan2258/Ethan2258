@@ -31,12 +31,12 @@ jobs:
 
       - name: Commit updated rule files
         run: |
-          if ! git status --porcelain -- Nodeseek.yaml SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs | grep -q .; then
+          if ! git status --porcelain -- Nodeseek.yaml Nodeseek.srs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs | grep -q .; then
             echo "Generated rule files are already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Nodeseek.yaml SpeedtestInternational.mrs SpeedtestInternational_ipcidr.mrs TelegramSG.mrs TelegramNL.mrs
+          git add Nodeseek.yaml Nodeseek.srs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs
           git commit -m "chore: update generated rule files"
           git push
