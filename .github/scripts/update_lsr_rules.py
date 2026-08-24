@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 import stat
 import subprocess
 import tempfile
@@ -15,6 +16,9 @@ USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
 MIRROR_BRANCH = "Loon"
+DOMAIN_SET_ENTRY = re.compile(
+    r"^(?:\+\.)?(?:[A-Za-z0-9_*-]+\.)+[A-Za-z0-9_*-]+$"
+)
 NODESEEK_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/nodeseek.mrs",
