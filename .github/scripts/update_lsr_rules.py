@@ -180,12 +180,17 @@ def singbox_binary(directory: Path) -> Path:
     with urllib.request.urlopen(metadata_request, timeout=60) as response:
         release = json.load(response)
 
-    candidates = [
+    assets = [
         asset
         for asset in release.get("assets", [])
         if asset.get("name", "").startswith("sing-box-")
-        and asset.get("name", "").endswith("-linux-amd64.tar.gz")
+        and asset.get("name", "").endswith(".tar.gz")
     ]
+    candidates = []
+    for suffix in ("-linux-amd64.tar.gz", "-linux-amd64-glibc.tar.gz", "-linux-amd64-musl.tar.gz"):
+        candidates = [asset for asset in assets if asset["name"].endswith(suffix)]
+        if candidates:
+            break
     if not candidates:
         raise RuntimeError("no Linux amd64 Sing-box release asset found")
 
