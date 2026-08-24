@@ -31,8 +31,6 @@ Mihomo / Egern 规则文件与相关资源。
 - [TelegramSG.srs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramSG.srs)
 - [TelegramNL.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramNL.mrs)
 - [TelegramNL.srs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/TelegramNL.srs)
-- [telegram_nl.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/telegram_nl.yaml)
-- [telegram_sg.yaml](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/telegram_sg.yaml)
 - [Webrtc_domain.mrs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/Webrtc_domain.mrs)
 - [Webrtc_domain.srs](https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/Webrtc_domain.srs)
 
