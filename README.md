@@ -48,6 +48,27 @@ GitHub Actions 每天北京时间 `10:17` 自动下载以下 Loon 规则，并�
 
 每次同步也会从各自源文件直接编译 Sing-box `.srs`，包括 Speedtest、Telegram 和 WebRTC。`.srs` 是 Sing-box 原生二进制 rule-set，直接在 Sing-box 中使用，不要把 `.mrs` 改名为 `.srs`。
 
+Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如：
+
+```json
+{
+  "route": {
+    "rule_set": [
+      {
+        "tag": "SpeedtestInternational",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/SpeedtestInternational.srs",
+        "download_detour": "direct",
+        "update_interval": "1d"
+      }
+    ]
+  }
+}
+```
+
+`SpeedtestInternational_ipcidr.srs`、`TelegramSG.srs` 和 `TelegramNL.srs` 是 IP rule-set；`Nodeseek.srs`、`SpeedtestInternational.srs` 和 `Webrtc_domain.srs` 是域名 rule-set。Speedtest 域名和 IP 规则需要分别引用。
+
 Speedtest 源同时包含域名和 IP 网段，因此会拆成两个行为独立的 MRS 文件；源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
