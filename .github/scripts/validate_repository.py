@@ -108,7 +108,9 @@ def validate_domain_set(path: Path, config: Any, errors: list[str]) -> None:
     if not isinstance(payload, list) or not payload:
         errors.append(f"{relative(path)}: payload must be a non-empty list")
         return
-    invalid_entries = [entry for entry in payload if not isinstance(entry, str) or not entry]
+    invalid_entries = [
+        entry for entry in payload if not isinstance(entry, str) or not entry
+    ]
     if invalid_entries:
         errors.append(f"{relative(path)}: payload entries must be non-empty strings")
     elif len(payload) != len(set(payload)):

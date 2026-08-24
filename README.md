@@ -37,6 +37,8 @@ GitHub Actions 每天北京时间 `10:17` 自动下载以下 Loon 规则，并�
 
 Speedtest 源同时包含域名和 IP 网段，因此会拆成两个行为独立的 MRS 文件；源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
+Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
+
 ## 校验
 
 每次推送到 `main` 分支或提交 Pull Request 时，GitHub Actions 会自动检查 YAML、规则引用、仓库链接和 MRS 文件头。

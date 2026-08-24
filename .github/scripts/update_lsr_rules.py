@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import gzip
 import json
-import re
 import stat
 import subprocess
 import tempfile
@@ -16,9 +15,6 @@ USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
 MIRROR_BRANCH = "Loon"
-DOMAIN_SET_ENTRY = re.compile(
-    r"^(?:\+\.)?(?:[A-Za-z0-9_*-]+\.)+[A-Za-z0-9_*-]+$"
-)
 NODESEEK_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/nodeseek.mrs",
@@ -102,9 +98,18 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
             continue
         if not value:
             raise ValueError(f"line {line_number}: empty rule value")
-        if value not in seen:
-            entries.append(value)
-            seen.add(value)
+        if rule_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}:
+            entry = f"+.{value.removeprefix('*.').removeprefix('.')}"
+        elif rule_type in {"DOMAIN", "HOST", "IP-CIDR", "IP-CIDR6"}:
+            entry = value
+        else:
+            raise ValueError(
+                f"line {line_number}: {rule_type} cannot be represented losslessly "
+                f"by a Mihomo {kind} MRS file"
+            )
+        if entry not in seen:
+            entries.append(entry)
+            seen.add(entry)
 
     if not entries:
         raise ValueError(f"source contains no {kind} rules")
