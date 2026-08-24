@@ -17,7 +17,7 @@ USER_AGENT = "Ethan2258-mihomo-rule-updater/1.0"
 MIHOMO_RELEASE_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest"
 SINGBOX_RELEASE_API = "https://api.github.com/repos/SagerNet/sing-box/releases/latest"
 MRS_MAGIC = bytes.fromhex("28b52ffd")
-SRS_MAGIC = b"SRS\x02"
+SRS_MAGIC = b"SRS"
 MIRROR_BRANCH = "Loon"
 DOMAIN_SET_ENTRY = re.compile(
     r"^(?:\+\.)?(?:[A-Za-z0-9_*-]+\.)+[A-Za-z0-9_*-]+$"
@@ -203,6 +203,14 @@ def singbox_binary(directory: Path) -> Path:
     return binary
 
 
+def singbox_version(binary: Path) -> str:
+    result = subprocess.run([str(binary), "version"], capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"unable to query Sing-box version: {detail}")
+    return (result.stdout or result.stderr).strip().splitlines()[0]
+
+
 def convert(binary: Path, input_path: Path, output_path: Path, kind: str) -> None:
     command = [str(binary), "convert-ruleset", kind, "text", str(input_path), str(output_path)]
     result = subprocess.run(command, capture_output=True, text=True)
@@ -255,7 +263,7 @@ def compile_srs(binary: Path, rules: list[dict[str, list[str]]], output_path: Pa
     if result.returncode:
         detail = (result.stderr or result.stdout).strip()
         raise RuntimeError(f"Sing-box SRS compilation failed: {detail}")
-    if not output_path.is_file() or output_path.read_bytes()[:4] != SRS_MAGIC:
+    if not output_path.is_file() or output_path.read_bytes()[:3] != SRS_MAGIC:
         raise RuntimeError(f"{output_path.name}: compiler did not produce a valid SRS file")
 
 
@@ -357,6 +365,7 @@ def main() -> int:
         workspace = Path(temporary)
         binary = mihomo_binary(workspace)
         singbox = singbox_binary(workspace)
+        print(f"Using {singbox_version(singbox)}")
         update_nodeseek(binary, singbox, workspace)
         update_webrtc(binary, singbox, workspace)
         for source in SOURCES:
