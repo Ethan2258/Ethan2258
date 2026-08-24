@@ -323,6 +323,7 @@ def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> None:
     )
     srs_output.replace(ROOT / "Nodeseek.srs")
     print(f"Nodeseek.yaml: {len(entries)} rules from {used_url}")
+    print(f"Nodeseek.srs: {len(entries)} rules from {used_url}")
 
 
 def update_webrtc(mihomo: Path, singbox: Path, workspace: Path) -> None:
@@ -371,6 +372,7 @@ def main() -> int:
             compile_srs(singbox, records_to_srs_rules(records, source["kind"]), srs_output)
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
+            print(f"{source['srs_output']}: {len(records)} rules from {used_url}")
     return 0
 
 
