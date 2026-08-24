@@ -46,7 +46,7 @@ GitHub Actions 每天北京时间 `10:17` 自动下载以下 Loon 规则，并�
 
 同时从 [MetaCubeX meta-rules-dat](https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs) 拉取 NodeSeek MRS，转换并同步到 `Nodeseek.yaml` 和 `Nodeseek.srs`。
 
-每次同步也会从各自源文件直接编译 Sing-box `.srs`，包括 Speedtest、Telegram 和 WebRTC。`.srs` 是 Sing-box 原生二进制 rule-set，直接在 Sing-box 中使用，不要把 `.mrs` 改名为 `.srs`。
+每次同步都会从 Sing-box 官方 `releases/latest` API 下载最新版本的编译器，再从各自源文件直接编译 Sing-box `.srs`，包括 Speedtest、Telegram 和 WebRTC。`.srs` 是 Sing-box 原生二进制 rule-set，直接在 Sing-box 中使用，不要把 `.mrs` 改名为 `.srs`。任务会打印实际使用的 Sing-box 版本，并校验生成文件的官方 `SRS` 文件头。
 
 Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如：
 
