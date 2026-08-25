@@ -35,7 +35,7 @@ SPEEDTEST_EXTRA_SOURCES = (
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs",
     "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
 )
-SPEEDTEST_FIXED_DOMAINS = ("fast.com", "fiber.google.com")
+SPEEDTEST_FIXED_SUFFIXES = ("fast.com", "fiber.google.com")
 SPEEDTEST_EXCLUDED_DOMAINS = {"speedtest.dukekunshan.edu.cn"}
 SOURCES = (
     {
@@ -276,8 +276,8 @@ def speedtest_extra_records(mihomo: Path, workspace: Path) -> tuple[list[tuple[s
         if record not in seen:
             records.append(record)
             seen.add(record)
-    for domain in SPEEDTEST_FIXED_DOMAINS:
-        record = ("DOMAIN", domain)
+    for domain in SPEEDTEST_FIXED_SUFFIXES:
+        record = ("DOMAIN-SUFFIX", domain)
         if record not in seen:
             records.append(record)
             seen.add(record)
