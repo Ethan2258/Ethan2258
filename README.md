@@ -6,8 +6,8 @@ Mihomo / Egern 规则文件与相关资源。
 
 - `Nodeseek.yaml`：由上游 MRS 自动转换的 NodeSeek 域名规则，适用于 Egern。
 - `Nodeseek.srs`：由同一上游直接编译的 Sing-box 域名规则。
-- `SpeedtestInternational.mrs`：由 Kelee 原始 Loon 规则转换的国际 Speedtest 域名规则。
-- `SpeedtestInternational.srs`：由同一份 Kelee 原始 Loon 规则转换的 Sing-box 域名规则。
+- `SpeedtestInternational.mrs`：由 Kelee 原始 Loon 规则补充国际测速域名后转换的规则。
+- `SpeedtestInternational.srs`：由同一份合并规则转换的 Sing-box 域名规则。
 - `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
 - `SpeedtestInternational_ipcidr.srs`：国际 Speedtest Sing-box IP 网段规则。
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
@@ -39,6 +39,7 @@ Mihomo / Egern 规则文件与相关资源。
 GitHub Actions 每 3 小时自动下载以下 Loon 规则，按原始规则类型转换并提交生成文件到 `main`：
 
 - [SpeedtestInternational.lsr](https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr)
+- [MetaCubeX speedtest.mrs](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/speedtest.mrs)（仅补充 Kelee 缺少的国际测速域名）
 - [TelegramSG.lsr](https://rule.kelee.one/Loon/TelegramSG.lsr)
 - [TelegramNL.lsr](https://rule.kelee.one/Loon/TelegramNL.lsr)
 
@@ -67,7 +68,7 @@ Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如�
 
 `SpeedtestInternational_ipcidr.srs`、`TelegramSG.srs` 和 `TelegramNL.srs` 是 IP rule-set；`Nodeseek.srs`、`SpeedtestInternational.srs` 和 `Webrtc_domain.srs` 是域名 rule-set。Speedtest 域名和 IP 规则需要分别引用。
 
-Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs`、IP `.mrs` 与 `.srs` 均由同一份 Kelee 原始规则生成，保留 `DOMAIN`、`DOMAIN-SUFFIX`、`IP-CIDR` 的匹配语义，不追加其他来源的规则。Kelee 源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
+Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 均由 Kelee 原始规则、MetaCubeX 官方测速域名差集，以及 `fast.com`、`fiber.google.com` 生成；大陆测速域名会被排除。IP `.mrs` 与 `.srs` 仍只来自 Kelee 的 IP 规则。所有来源在每次更新时重新下载、去重并转换，保证两种格式的匹配语义一致。Kelee 源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
 
