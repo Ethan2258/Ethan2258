@@ -30,6 +30,13 @@ WEBRTC_SOURCES = (
     "https://raw.githubusercontent.com/milangree/rules/main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
     "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
 )
+SPEEDTEST_EXTRA_SOURCES = (
+    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs",
+    "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
+)
+SPEEDTEST_FIXED_DOMAINS = ("fast.com", "fiber.google.com")
+SPEEDTEST_EXCLUDED_DOMAINS = {"speedtest.dukekunshan.edu.cn"}
 SOURCES = (
     {
         "output": "SpeedtestInternational.mrs",
@@ -145,6 +152,13 @@ def parse_lsr(data: bytes, kind: str) -> list[str]:
     return entries
 
 
+def records_to_entries(records: list[tuple[str, str]]) -> list[str]:
+    return [
+        f"+.{value}" if rule_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"} else value
+        for rule_type, value in records
+    ]
+
+
 def mihomo_binary(directory: Path) -> Path:
     metadata_request = urllib.request.Request(
         MIHOMO_RELEASE_API,
@@ -240,6 +254,36 @@ def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> 
         raise RuntimeError(f"Mihomo MRS decoding failed: {detail}")
     if not output_path.is_file() or not output_path.read_text(encoding="utf-8").strip():
         raise RuntimeError(f"{input_path.name}: converter produced an empty rule list")
+
+
+def speedtest_extra_records(mihomo: Path, workspace: Path) -> tuple[list[tuple[str, str]], str]:
+    data, used_url = download_first(SPEEDTEST_EXTRA_SOURCES)
+    if data[:4] != MRS_MAGIC:
+        raise RuntimeError("speedtest.mrs: source has an invalid MRS/Zstandard header")
+    input_path = workspace / "speedtest-extra.mrs"
+    output_path = workspace / "speedtest-extra.txt"
+    input_path.write_bytes(data)
+    decode_mrs(mihomo, input_path, output_path, "domain")
+    records: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for entry in output_path.read_text(encoding="utf-8").splitlines():
+        entry = entry.strip()
+        if not entry:
+            continue
+        if not DOMAIN_SET_ENTRY.fullmatch(entry):
+            raise ValueError(f"speedtest.mrs: invalid domain entry {entry!r}")
+        record = ("DOMAIN-SUFFIX", entry[2:]) if entry.startswith("+.") else ("DOMAIN", entry)
+        if record not in seen:
+            records.append(record)
+            seen.add(record)
+    for domain in SPEEDTEST_FIXED_DOMAINS:
+        record = ("DOMAIN", domain)
+        if record not in seen:
+            records.append(record)
+            seen.add(record)
+    if not records:
+        raise RuntimeError("speedtest extras contain no domain rules")
+    return records, used_url
 
 
 def decompile_srs(binary: Path, input_path: Path, output_path: Path) -> list[dict]:
@@ -395,10 +439,17 @@ def main() -> int:
         print(f"Using {singbox_version(singbox)}")
         update_nodeseek(binary, singbox, workspace)
         update_webrtc(binary, singbox, workspace)
+        speedtest_extras, speedtest_extras_url = speedtest_extra_records(binary, workspace)
         for source in SOURCES:
             data, used_url = download_source(source)
             records = parse_lsr_records(data, source["kind"])
             entries = parse_lsr(data, source["kind"])
+            if source["output"] == "SpeedtestInternational.mrs":
+                records = [
+                    record for record in records if record[1].lower() not in SPEEDTEST_EXCLUDED_DOMAINS
+                ]
+                records = list(dict.fromkeys([*records, *speedtest_extras]))
+                entries = records_to_entries(records)
             input_path = workspace / f"{source['output']}.txt"
             temporary_output = workspace / source["output"]
             input_path.write_text("\n".join(entries) + "\n", encoding="utf-8")
@@ -410,6 +461,8 @@ def main() -> int:
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
             print(f"{source['srs_output']}: {len(records)} Loon records from {used_url}")
+            if source["output"] == "SpeedtestInternational.mrs":
+                print(f"  merged {len(speedtest_extras)} supplemental domains from {speedtest_extras_url}")
     return 0
 
 
