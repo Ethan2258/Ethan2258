@@ -68,7 +68,7 @@ Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如�
 
 `SpeedtestInternational_ipcidr.srs`、`TelegramSG.srs` 和 `TelegramNL.srs` 是 IP rule-set；`Nodeseek.srs`、`SpeedtestInternational.srs` 和 `Webrtc_domain.srs` 是域名 rule-set。Speedtest 域名和 IP 规则需要分别引用。
 
-Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 均由 Kelee 原始规则、MetaCubeX 官方测速域名差集，以及 `fast.com`、`fiber.google.com` 生成；大陆测速域名会被排除。IP `.mrs` 与 `.srs` 仍只来自 Kelee 的 IP 规则。所有来源在每次更新时重新下载、去重并转换，保证两种格式的匹配语义一致。Kelee 源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
+Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 均由 Kelee 原始规则、MetaCubeX 官方测速域名差集，以及 `+.fast.com`、`+.fiber.google.com` 生成；大陆测速域名会被排除。IP `.mrs` 与 `.srs` 仍只来自 Kelee 的 IP 规则。所有来源在每次更新时重新下载、去重并转换，保证两种格式的匹配语义一致。Kelee 源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
 
