@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import http.client
 import ipaddress
 import json
 import re
@@ -8,6 +9,7 @@ import stat
 import subprocess
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -43,6 +45,10 @@ SPEEDTEST_METACUBEX_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs",
     "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
+)
+SPEEDTEST_V2FLY_CATEGORY_SOURCES = (
+    "https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/category-speedtest",
+    "https://cdn.jsdelivr.net/gh/v2fly/domain-list-community@master/data/category-speedtest",
 )
 SPEEDTEST_SUKKA_STATIC_SOURCES = (
     "https://raw.githubusercontent.com/SukkaW/Surge/master/Source/domainset/speedtest.conf",
@@ -91,12 +97,19 @@ SPEEDTEST_FIXED_SUFFIXES = (
 )
 SPEEDTEST_EXCLUDED_DOMAINS = {
     "7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe",
+    "chinatelecom.com.cn.dns.ink",
     "speedtest.dukekunshan.edu.cn",
+    "speedtest.mfcyun.com",
 }
+SPEEDTEST_SHARED_GLOBAL_SERVER_SUFFIXES = {
+    "ooklaserver.net",
+}
+FETCH_ATTEMPTS = 3
 MIN_SPEEDTEST_DOMAIN_RECORDS = 15_000
 MIN_SPEEDTEST_IP_RECORDS = 5
 MIN_SUKKA_OOKLA_HOSTS = 1_000
 MIN_LIBRESPEED_HOSTS = 10
+MIN_V2FLY_MAINLAND_TAGS = 10
 MIN_INDEPENDENT_SPEEDTEST_SOURCES = 5
 SOURCES = (
     {
@@ -131,16 +144,29 @@ SOURCES = (
 
 
 def fetch(url: str) -> bytes:
-    request = urllib.request.Request(
-        url,
-        headers={"User-Agent": USER_AGENT, "Accept": "text/plain,*/*"},
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        data = response.read()
-    sample = data[:512].lower()
-    if b"attention required" in sample or b"cf-chl-" in sample:
-        raise RuntimeError("Cloudflare challenge page returned")
-    return data
+    last_error: Exception | None = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": USER_AGENT, "Accept": "text/plain,*/*"},
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                data = response.read()
+            sample = data[:512].lower()
+            if b"attention required" in sample or b"cf-chl-" in sample:
+                raise RuntimeError("Cloudflare challenge page returned")
+            return data
+        except (
+            OSError,
+            RuntimeError,
+            http.client.HTTPException,
+            urllib.error.URLError,
+        ) as error:
+            last_error = error
+            if attempt + 1 < FETCH_ATTEMPTS:
+                time.sleep(2**attempt)
+    raise RuntimeError(f"download failed after {FETCH_ATTEMPTS} attempts: {last_error}")
 
 
 def download_source(source: dict[str, str]) -> tuple[bytes, str]:
@@ -429,6 +455,44 @@ def domainset_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
     return records
 
 
+def v2fly_category_records(
+    data: bytes,
+    source_name: str,
+) -> tuple[list[tuple[str, str]], set[str]]:
+    records: list[tuple[str, str]] = []
+    mainland: set[str] = set()
+    seen: set[tuple[str, str]] = set()
+    try:
+        lines = data.decode("utf-8-sig").splitlines()
+    except UnicodeDecodeError as error:
+        raise RuntimeError(f"{source_name}: invalid UTF-8: {error}") from error
+
+    for line_number, raw_line in enumerate(lines, 1):
+        fields = raw_line.split("#", 1)[0].strip().lower().split()
+        if not fields:
+            continue
+        entry, attributes = fields[0], set(fields[1:])
+        if entry.startswith(("include:", "regexp:", "keyword:")) or "@ads" in attributes:
+            continue
+
+        exact = entry.startswith("full:")
+        value = entry.removeprefix("full:").removeprefix("domain:").rstrip(".")
+        if not DOMAIN_SET_ENTRY.fullmatch(value):
+            raise ValueError(f"{source_name}:{line_number}: invalid domain {value!r}")
+        if "@cn" in attributes and "@!cn" not in attributes:
+            mainland.add(value)
+            continue
+
+        record = ("DOMAIN" if exact else "DOMAIN-SUFFIX", value)
+        if record not in seen:
+            records.append(record)
+            seen.add(record)
+
+    if not records or not mainland:
+        raise RuntimeError(f"{source_name}: expected both foreign and @cn domain rules")
+    return records, mainland
+
+
 def loon_domain_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
     records: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
@@ -461,7 +525,10 @@ def loon_domain_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
     return records
 
 
-def speedtest_namespace_suffixes(exact_domains: set[str]) -> set[str]:
+def speedtest_namespace_suffixes(
+    exact_domains: set[str],
+    blocked_domains: set[str],
+) -> set[str]:
     candidates: dict[str, set[str]] = {}
     for domain in exact_domains:
         labels = domain.split(".")
@@ -469,6 +536,13 @@ def speedtest_namespace_suffixes(exact_domains: set[str]) -> set[str]:
             if not SPEEDTEST_NAMESPACE_LABEL.fullmatch(label):
                 continue
             namespace = ".".join(labels[index:])
+            if namespace in SPEEDTEST_SHARED_GLOBAL_SERVER_SUFFIXES:
+                continue
+            if any(
+                blocked == namespace or blocked.endswith(f".{namespace}")
+                for blocked in blocked_domains
+            ):
+                continue
             candidates.setdefault(namespace, set()).add(domain)
 
     return {
@@ -478,7 +552,11 @@ def speedtest_namespace_suffixes(exact_domains: set[str]) -> set[str]:
     }
 
 
-def compact_domain_records(records: list[tuple[str, str]]) -> list[tuple[str, str]]:
+def compact_domain_records(
+    records: list[tuple[str, str]],
+    blocked_domains: set[str] | None = None,
+) -> list[tuple[str, str]]:
+    blocked_domains = blocked_domains or set()
     exact: set[str] = set()
     suffixes: set[str] = set()
     for rule_type, raw_value in records:
@@ -491,7 +569,15 @@ def compact_domain_records(records: list[tuple[str, str]]) -> list[tuple[str, st
     # Promote only explicitly Speedtest-named namespaces with multiple verified
     # servers. This keeps future hosts covered without widening an ISP's whole
     # registrable domain (for example, never promoting all of rogers.com).
-    suffixes.update(speedtest_namespace_suffixes(exact))
+    suffixes = {
+        suffix
+        for suffix in suffixes
+        if not any(
+            blocked == suffix or blocked.endswith(f".{suffix}")
+            for blocked in blocked_domains
+        )
+    }
+    suffixes.update(speedtest_namespace_suffixes(exact, blocked_domains))
 
     compact_suffixes: list[str] = []
     for suffix in sorted(suffixes, key=lambda value: (value.count("."), len(value), value)):
@@ -544,7 +630,21 @@ def excluded_speedtest_domain(
     if rule_type not in {"DOMAIN", "HOST", "DOMAIN-SUFFIX", "HOST-SUFFIX"}:
         return False
     value = raw_value.lower().removeprefix("*.").removeprefix(".").rstrip(".")
-    return value in mainland_domains or value.endswith(".cn")
+    return (
+        value in SPEEDTEST_SHARED_GLOBAL_SERVER_SUFFIXES
+        or value.endswith(".cn")
+        or (
+            rule_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}
+            and any(
+                mainland == value or mainland.endswith(f".{value}")
+                for mainland in mainland_domains
+            )
+        )
+        or any(
+            value == mainland or value.endswith(f".{mainland}")
+            for mainland in mainland_domains
+        )
+    )
 
 
 def speedtest_source_groups(
@@ -571,6 +671,26 @@ def speedtest_source_groups(
         SPEEDTEST_METACUBEX_SOURCES,
         lambda data: mrs_domain_records(mihomo, data, workspace, "speedtest-metacubex"),
         10,
+    )
+
+    def parse_v2fly(data: bytes) -> list[tuple[str, str]]:
+        records, excluded = v2fly_category_records(
+            data,
+            "V2Fly category-speedtest",
+        )
+        if len(excluded) < MIN_V2FLY_MAINLAND_TAGS:
+            raise RuntimeError(
+                f"V2Fly category-speedtest: expected at least "
+                f"{MIN_V2FLY_MAINLAND_TAGS} @cn rules, received {len(excluded)}"
+            )
+        mainland_domains.update(excluded)
+        return records
+
+    collect(
+        "V2Fly category-speedtest",
+        SPEEDTEST_V2FLY_CATEGORY_SOURCES,
+        parse_v2fly,
+        30,
     )
     collect(
         "Sukka static",
@@ -902,7 +1022,10 @@ def main() -> int:
                     f"Kelee international base: {len(records)} domain rules, "
                     f"excluded {len(records) - len(filtered_records)} known mainland endpoint(s)"
                 )
-                merged_records = compact_domain_records(filtered_records)
+                merged_records = compact_domain_records(
+                    filtered_records,
+                    mainland_speedtest_domains,
+                )
                 all_source_records = list(filtered_records)
                 for group_name, group_records, group_url in speedtest_groups:
                     filtered_group = [
@@ -918,7 +1041,10 @@ def main() -> int:
                     )
                     covered = len(filtered_group) - new_coverage
                     all_source_records.extend(filtered_group)
-                    merged_records = compact_domain_records([*merged_records, *filtered_group])
+                    merged_records = compact_domain_records(
+                        [*merged_records, *filtered_group],
+                        mainland_speedtest_domains,
+                    )
                     print(
                         f"  {group_name}: {len(group_records)} validated rules, "
                         f"{excluded_count} excluded, {covered} already covered, "
@@ -934,6 +1060,36 @@ def main() -> int:
                     raise RuntimeError(
                         f"Speedtest semantic compaction lost {len(missing)} source rule(s): {missing[:5]}"
                     )
+                covered_mainland = sorted(
+                    domain
+                    for domain in mainland_speedtest_domains
+                    if domain_record_is_covered(("DOMAIN", domain), final_coverage)
+                )
+                if covered_mainland:
+                    raise RuntimeError(
+                        "Speedtest strict region audit still covers known mainland "
+                        f"domain(s): {covered_mainland[:5]}"
+                    )
+                final_exact, final_suffixes = final_coverage
+                retained_shared_suffixes = sorted(
+                    final_suffixes & SPEEDTEST_SHARED_GLOBAL_SERVER_SUFFIXES
+                )
+                retained_cn_domains = sorted(
+                    domain
+                    for domain in final_exact | final_suffixes
+                    if domain.endswith(".cn")
+                )
+                if retained_shared_suffixes or retained_cn_domains:
+                    raise RuntimeError(
+                        "Speedtest strict region audit retained an unsafe shared "
+                        f"suffix or .cn domain: "
+                        f"{[*retained_shared_suffixes, *retained_cn_domains][:5]}"
+                    )
+                print(
+                    "Speedtest strict region audit: "
+                    f"{len(mainland_speedtest_domains)} known mainland namespace(s) "
+                    "and shared global server suffixes excluded"
+                )
                 print(
                     f"Speedtest semantic compaction: {len(all_source_records)} source records -> "
                     f"{len(merged_records)} rules with identical-or-broader reviewed coverage"
