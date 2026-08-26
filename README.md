@@ -6,8 +6,8 @@ Mihomo / Egern 规则文件与相关资源。
 
 - `Nodeseek.yaml`：由上游 MRS 自动转换的 NodeSeek 域名规则，适用于 Egern。
 - `Nodeseek.srs`：由同一上游直接编译的 Sing-box 域名规则。
-- `SpeedtestInternational.mrs`：由 Kelee 原始 Loon 规则补充国际测速域名后转换的规则。
-- `SpeedtestInternational.srs`：由同一份合并规则转换的 Sing-box 域名规则。
+- `SpeedtestInternational.mrs`：多上游交叉合并并精简的国际测速域名规则。
+- `SpeedtestInternational.srs`：由同一份最终规则转换的 Sing-box 域名规则。
 - `SpeedtestInternational_ipcidr.mrs`：国际 Speedtest IP 网段规则。
 - `SpeedtestInternational_ipcidr.srs`：国际 Speedtest Sing-box IP 网段规则。
 - `TelegramSG.mrs`：Telegram SG IP 网段规则。
@@ -36,10 +36,14 @@ Mihomo / Egern 规则文件与相关资源。
 
 ## 自动更新
 
-GitHub Actions 每 3 小时自动下载以下 Loon 规则，按原始规则类型转换并提交生成文件到 `main`：
+GitHub Actions 每 3 小时自动下载以下规则与服务器目录，交叉合并后按原始规则类型转换并提交生成文件到 `main`：
 
 - [SpeedtestInternational.lsr](https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr)
-- [MetaCubeX speedtest.mrs](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/speedtest.mrs)（仅补充 Kelee 缺少的国际测速域名）
+- [MetaCubeX speedtest.mrs](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/speedtest.mrs)
+- [SukkaW Speedtest](https://github.com/SukkaW/Surge/blob/master/Source/domainset/speedtest.conf)（人工维护的平台后缀、实时 Ookla 服务器与 LibreSpeed 镜像）
+- [LibreSpeed 官方服务器清单](https://github.com/librespeed/speedtest/blob/master/server-list.json)
+- [oneclickvirt Speedtest 快照](https://github.com/oneclickvirt/speedtest/blob/main/model/snapshot/speedtest-servers.json)
+- [blackmatrix7 Speedtest](https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Clash/Speedtest/Speedtest.list)
 - [TelegramSG.lsr](https://rule.kelee.one/Loon/TelegramSG.lsr)
 - [TelegramNL.lsr](https://rule.kelee.one/Loon/TelegramNL.lsr)
 
@@ -68,7 +72,7 @@ Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如�
 
 `SpeedtestInternational_ipcidr.srs`、`TelegramSG.srs` 和 `TelegramNL.srs` 是 IP rule-set；`Nodeseek.srs`、`SpeedtestInternational.srs` 和 `Webrtc_domain.srs` 是域名 rule-set。Speedtest 域名和 IP 规则需要分别引用。
 
-Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 均由 Kelee 原始规则、MetaCubeX 官方测速域名差集，以及 `+.fast.com`、`+.fiber.google.com` 生成；大陆测速域名会被排除。IP `.mrs` 与 `.srs` 仍只来自 Kelee 的 IP 规则。所有来源在每次更新时重新下载、去重并转换，保证两种格式的匹配语义一致。Kelee 源站暂时不可用时，任务会自动使用对应的公开镜像继续更新。
+Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 使用 Kelee 大规模国际服务器清单作为主体，再与 MetaCubeX、SukkaW 实时 Ookla 目录、LibreSpeed 官方清单、oneclickvirt、blackmatrix7 和人工复核的国际测速平台后缀取并集。带有中国大陆元数据的精确服务器会被排除，香港、台湾及其他境外服务器保留。经过审核的域名后缀会替代其已经覆盖的精确主机，减少规则数量但不缩小覆盖范围；脚本会逐条验证压缩前后的覆盖关系。IP `.mrs` 与 `.srs` 只收录上游明确提供的测速 IP 规则，不把动态域名强行解析成容易过期或误匹配的 IP。每个来源都有格式和最小规模检查，补充源临时失效时会保留上一版已验证规则，避免更新后丢失服务器。两种格式始终由同一个最终集合生成并进行语义一致性校验。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
 

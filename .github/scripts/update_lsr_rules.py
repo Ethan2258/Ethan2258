@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import ipaddress
 import json
 import re
 import stat
@@ -10,6 +11,7 @@ import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,13 +34,59 @@ WEBRTC_SOURCES = (
     "https://raw.githubusercontent.com/milangree/rules/main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
     "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
 )
-SPEEDTEST_EXTRA_SOURCES = (
+SPEEDTEST_METACUBEX_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/speedtest.mrs",
     "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
 )
-SPEEDTEST_FIXED_SUFFIXES = ("fast.com", "fiber.google.com")
+SPEEDTEST_SUKKA_STATIC_SOURCES = (
+    "https://raw.githubusercontent.com/SukkaW/Surge/master/Source/domainset/speedtest.conf",
+    "https://cdn.jsdelivr.net/gh/SukkaW/Surge@master/Source/domainset/speedtest.conf",
+)
+SPEEDTEST_SUKKA_OOKLA_SOURCES = (
+    "https://speedtest-net-servers.cdn.skk.moe/servers.json",
+)
+SPEEDTEST_LIBRESPEED_SOURCES = (
+    "https://raw.githubusercontent.com/librespeed/speedtest/master/server-list.json",
+    "https://cdn.jsdelivr.net/gh/librespeed/speedtest@master/server-list.json",
+)
+SPEEDTEST_SUKKA_LIBRESPEED_SOURCES = (
+    "https://speedtest-net-servers.cdn.skk.moe/librespeed-servers.json",
+)
+SPEEDTEST_ONECLICK_SOURCES = (
+    "https://raw.githubusercontent.com/oneclickvirt/speedtest/main/model/snapshot/speedtest-servers.json",
+    "https://cdn.jsdelivr.net/gh/oneclickvirt/speedtest@main/model/snapshot/speedtest-servers.json",
+)
+SPEEDTEST_BLACKMATRIX_SOURCES = (
+    "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Speedtest/Speedtest.list",
+    "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Speedtest/Speedtest.list",
+)
+SPEEDTEST_FIXED_SUFFIXES = (
+    "azurespeed.com",
+    "bandwidthplace.com",
+    "broadbandspeedchecker.co.uk",
+    "broadbandspeedtest.org.uk",
+    "fast.com",
+    "fiber.google.com",
+    "internethealthtest.org",
+    "librespeed.org",
+    "meter.net",
+    "mlab-ns.appspot.com",
+    "nperf.com",
+    "openspeedtest.com",
+    "speed.io",
+    "speedcheck.org",
+    "speedof.me",
+    "speedsmart.net",
+    "speedtest.org",
+    "testmy.net",
+)
 SPEEDTEST_EXCLUDED_DOMAINS = {"speedtest.dukekunshan.edu.cn"}
+MIN_SPEEDTEST_DOMAIN_RECORDS = 15_000
+MIN_SPEEDTEST_IP_RECORDS = 5
+MIN_SUKKA_OOKLA_HOSTS = 1_000
+MIN_LIBRESPEED_HOSTS = 10
+MIN_INDEPENDENT_SPEEDTEST_SOURCES = 4
 SOURCES = (
     {
         "output": "SpeedtestInternational.mrs",
@@ -258,34 +306,321 @@ def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> 
         raise RuntimeError(f"{input_path.name}: converter produced an empty rule list")
 
 
-def speedtest_extra_records(mihomo: Path, workspace: Path) -> tuple[list[tuple[str, str]], str]:
-    data, used_url = download_first(SPEEDTEST_EXTRA_SOURCES)
+def mrs_domain_records(mihomo: Path, data: bytes, workspace: Path, stem: str) -> list[tuple[str, str]]:
     if data[:4] != MRS_MAGIC:
-        raise RuntimeError("speedtest.mrs: source has an invalid MRS/Zstandard header")
-    input_path = workspace / "speedtest-extra.mrs"
-    output_path = workspace / "speedtest-extra.txt"
+        raise RuntimeError(f"{stem}: source has an invalid MRS/Zstandard header")
+    input_path = workspace / f"{stem}.mrs"
+    output_path = workspace / f"{stem}.txt"
     input_path.write_bytes(data)
     decode_mrs(mihomo, input_path, output_path, "domain")
     records: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
     for entry in output_path.read_text(encoding="utf-8").splitlines():
-        entry = entry.strip()
+        entry = entry.strip().lower()
         if not entry:
             continue
         if not DOMAIN_SET_ENTRY.fullmatch(entry):
-            raise ValueError(f"speedtest.mrs: invalid domain entry {entry!r}")
+            raise ValueError(f"{stem}: invalid domain entry {entry!r}")
         record = ("DOMAIN-SUFFIX", entry[2:]) if entry.startswith("+.") else ("DOMAIN", entry)
         if record not in seen:
             records.append(record)
             seen.add(record)
-    for domain in SPEEDTEST_FIXED_SUFFIXES:
-        record = ("DOMAIN-SUFFIX", domain)
+    if not records:
+        raise RuntimeError(f"{stem}: source contains no domain rules")
+    return records
+
+
+def normalized_hostname(value: object) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    candidate = value.strip()
+    if "://" not in candidate and not candidate.startswith("//"):
+        candidate = f"//{candidate}"
+    try:
+        hostname = urlsplit(candidate).hostname
+    except ValueError:
+        return None
+    if not hostname:
+        return None
+    hostname = hostname.lower().rstrip(".")
+    try:
+        ipaddress.ip_address(hostname)
+        return None
+    except ValueError:
+        pass
+    if hostname.startswith("+.") or not DOMAIN_SET_ENTRY.fullmatch(hostname):
+        return None
+    return hostname
+
+
+def json_list(data: bytes, source_name: str) -> list[dict]:
+    try:
+        value = json.loads(data.decode("utf-8-sig"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"{source_name}: invalid JSON: {error}") from error
+    if not isinstance(value, list) or not value or not all(isinstance(item, dict) for item in value):
+        raise RuntimeError(f"{source_name}: expected a non-empty JSON object array")
+    return value
+
+
+def server_json_records(
+    data: bytes,
+    source_name: str,
+    fields: tuple[str, ...],
+    exclude_mainland: bool,
+) -> tuple[list[tuple[str, str]], set[str]]:
+    records: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    mainland: set[str] = set()
+    for item in json_list(data, source_name):
+        is_mainland = str(item.get("cc", "")).upper() == "CN" or str(
+            item.get("country", "")
+        ).strip().lower() == "china"
+        for field in fields:
+            hostname = normalized_hostname(item.get(field))
+            if not hostname:
+                continue
+            if is_mainland:
+                mainland.add(hostname)
+                if exclude_mainland:
+                    continue
+            if hostname not in seen:
+                records.append(("DOMAIN", hostname))
+                seen.add(hostname)
+    return records, mainland
+
+
+def domainset_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
+    records: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    try:
+        lines = data.decode("utf-8-sig").splitlines()
+    except UnicodeDecodeError as error:
+        raise RuntimeError(f"{source_name}: invalid UTF-8: {error}") from error
+    for line_number, raw_line in enumerate(lines, 1):
+        entry = raw_line.split("#", 1)[0].strip().lower().rstrip(".")
+        if not entry:
+            continue
+        rule_type = "DOMAIN-SUFFIX" if entry.startswith(".") else "DOMAIN"
+        value = entry.removeprefix(".")
+        if not DOMAIN_SET_ENTRY.fullmatch(value):
+            raise ValueError(f"{source_name}:{line_number}: invalid domain {value!r}")
+        record = (rule_type, value)
         if record not in seen:
             records.append(record)
             seen.add(record)
     if not records:
-        raise RuntimeError("speedtest extras contain no domain rules")
-    return records, used_url
+        raise RuntimeError(f"{source_name}: source contains no domain rules")
+    return records
+
+
+def loon_domain_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
+    records: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    try:
+        lines = data.decode("utf-8-sig").splitlines()
+    except UnicodeDecodeError as error:
+        raise RuntimeError(f"{source_name}: invalid UTF-8: {error}") from error
+    for line_number, raw_line in enumerate(lines, 1):
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        fields = [field.strip() for field in line.split(",")]
+        if len(fields) < 2:
+            raise ValueError(f"{source_name}:{line_number}: malformed Loon rule")
+        rule_type = fields[0].upper()
+        if rule_type == "DOMAIN-KEYWORD":
+            continue
+        if rule_type not in {"DOMAIN", "DOMAIN-SUFFIX", "HOST", "HOST-SUFFIX"}:
+            continue
+        value = fields[1].removeprefix("*.").removeprefix(".").lower().rstrip(".")
+        if not DOMAIN_SET_ENTRY.fullmatch(value):
+            raise ValueError(f"{source_name}:{line_number}: invalid domain {value!r}")
+        normalized_type = "DOMAIN-SUFFIX" if rule_type.endswith("SUFFIX") else "DOMAIN"
+        record = (normalized_type, value)
+        if record not in seen:
+            records.append(record)
+            seen.add(record)
+    if not records:
+        raise RuntimeError(f"{source_name}: source contains no exact or suffix domain rules")
+    return records
+
+
+def compact_domain_records(records: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    exact: set[str] = set()
+    suffixes: set[str] = set()
+    for rule_type, raw_value in records:
+        value = raw_value.lower().removeprefix("*.").removeprefix(".").rstrip(".")
+        if rule_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}:
+            suffixes.add(value)
+        elif rule_type in {"DOMAIN", "HOST"}:
+            exact.add(value)
+
+    compact_suffixes: list[str] = []
+    for suffix in sorted(suffixes, key=lambda value: (value.count("."), len(value), value)):
+        if any(suffix == parent or suffix.endswith(f".{parent}") for parent in compact_suffixes):
+            continue
+        compact_suffixes.append(suffix)
+
+    compact_exact = sorted(
+        domain
+        for domain in exact
+        if not any(domain == suffix or domain.endswith(f".{suffix}") for suffix in compact_suffixes)
+    )
+    return [
+        *(('DOMAIN-SUFFIX', suffix) for suffix in sorted(compact_suffixes)),
+        *(('DOMAIN', domain) for domain in compact_exact),
+    ]
+
+
+def domain_coverage_index(records: list[tuple[str, str]]) -> tuple[set[str], set[str]]:
+    exact = {
+        candidate.lower().removeprefix("*.").removeprefix(".").rstrip(".")
+        for candidate_type, candidate in records
+        if candidate_type in {"DOMAIN", "HOST"}
+    }
+    suffixes = {
+        candidate.lower().removeprefix("*.").removeprefix(".").rstrip(".")
+        for candidate_type, candidate in records
+        if candidate_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}
+    }
+    return exact, suffixes
+
+
+def domain_record_is_covered(
+    record: tuple[str, str],
+    coverage: tuple[set[str], set[str]],
+) -> bool:
+    rule_type, raw_value = record
+    value = raw_value.lower().removeprefix("*.").removeprefix(".").rstrip(".")
+    exact, suffixes = coverage
+    if rule_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}:
+        return any(value == suffix or value.endswith(f".{suffix}") for suffix in suffixes)
+    return value in exact or any(value == suffix or value.endswith(f".{suffix}") for suffix in suffixes)
+
+
+def speedtest_source_groups(
+    mihomo: Path,
+    workspace: Path,
+) -> tuple[list[tuple[str, list[tuple[str, str]], str]], set[str]]:
+    groups: list[tuple[str, list[tuple[str, str]], str]] = []
+    failures: list[str] = []
+    mainland_domains: set[str] = set(SPEEDTEST_EXCLUDED_DOMAINS)
+
+    def collect(name: str, urls: tuple[str, ...], parser, minimum: int) -> None:
+        try:
+            data, used_url = download_first(urls)
+            records = parser(data)
+            if len(records) < minimum:
+                raise RuntimeError(f"expected at least {minimum} rules, received {len(records)}")
+            groups.append((name, records, used_url))
+        except (OSError, ValueError, RuntimeError, urllib.error.URLError) as error:
+            failures.append(f"{name}: {error}")
+            print(f"WARNING: ignored unavailable or invalid {name} source: {error}")
+
+    collect(
+        "MetaCubeX",
+        SPEEDTEST_METACUBEX_SOURCES,
+        lambda data: mrs_domain_records(mihomo, data, workspace, "speedtest-metacubex"),
+        10,
+    )
+    collect(
+        "Sukka static",
+        SPEEDTEST_SUKKA_STATIC_SOURCES,
+        lambda data: domainset_records(data, "Sukka speedtest.conf"),
+        100,
+    )
+
+    def parse_sukka_ookla(data: bytes) -> list[tuple[str, str]]:
+        records, excluded = server_json_records(
+            data,
+            "Sukka Ookla servers",
+            ("host", "url"),
+            exclude_mainland=True,
+        )
+        mainland_domains.update(excluded)
+        return records
+
+    collect(
+        "Sukka live Ookla",
+        SPEEDTEST_SUKKA_OOKLA_SOURCES,
+        parse_sukka_ookla,
+        MIN_SUKKA_OOKLA_HOSTS,
+    )
+    collect(
+        "LibreSpeed official",
+        SPEEDTEST_LIBRESPEED_SOURCES,
+        lambda data: server_json_records(
+            data,
+            "LibreSpeed servers",
+            ("server",),
+            exclude_mainland=True,
+        )[0],
+        MIN_LIBRESPEED_HOSTS,
+    )
+    collect(
+        "Sukka LibreSpeed mirror",
+        SPEEDTEST_SUKKA_LIBRESPEED_SOURCES,
+        lambda data: server_json_records(
+            data,
+            "Sukka LibreSpeed servers",
+            ("server",),
+            exclude_mainland=True,
+        )[0],
+        MIN_LIBRESPEED_HOSTS,
+    )
+
+    def parse_oneclick(data: bytes) -> list[tuple[str, str]]:
+        records, excluded = server_json_records(
+            data,
+            "oneclickvirt speedtest snapshot",
+            ("host", "url"),
+            exclude_mainland=True,
+        )
+        mainland_domains.update(excluded)
+        return records
+
+    collect(
+        "oneclickvirt snapshot",
+        SPEEDTEST_ONECLICK_SOURCES,
+        parse_oneclick,
+        20,
+    )
+    collect(
+        "blackmatrix7",
+        SPEEDTEST_BLACKMATRIX_SOURCES,
+        lambda data: loon_domain_records(data, "blackmatrix7 Speedtest.list"),
+        4,
+    )
+    groups.append(
+        (
+            "curated international platforms",
+            [("DOMAIN-SUFFIX", domain) for domain in SPEEDTEST_FIXED_SUFFIXES],
+            "built-in reviewed list",
+        )
+    )
+
+    successful_external = len(groups) - 1
+    if successful_external < MIN_INDEPENDENT_SPEEDTEST_SOURCES:
+        raise RuntimeError(
+            f"only {successful_external} independent Speedtest supplemental sources succeeded; "
+            f"at least {MIN_INDEPENDENT_SPEEDTEST_SOURCES} are required"
+        )
+
+    if failures:
+        existing = ROOT / "SpeedtestInternational.mrs"
+        if not existing.is_file() or existing.read_bytes()[:4] != MRS_MAGIC:
+            raise RuntimeError("supplemental sources failed and no valid previous Speedtest MRS is available")
+        previous = mrs_domain_records(
+            mihomo,
+            existing.read_bytes(),
+            workspace,
+            "speedtest-previous",
+        )
+        groups.append(("validated previous release", previous, str(existing)))
+        print(f"Preserving the previous release because {len(failures)} supplemental source group(s) failed")
+
+    return groups, mainland_domains
 
 
 def decompile_srs(binary: Path, input_path: Path, output_path: Path) -> list[dict]:
@@ -490,17 +825,64 @@ def main() -> int:
         print(f"Using {singbox_version(singbox)}")
         update_nodeseek(binary, singbox, workspace)
         update_webrtc(binary, singbox, workspace)
-        speedtest_extras, speedtest_extras_url = speedtest_extra_records(binary, workspace)
+        speedtest_groups, mainland_speedtest_domains = speedtest_source_groups(binary, workspace)
         for source in SOURCES:
             data, used_url = download_source(source)
             records = parse_lsr_records(data, source["kind"])
-            entries = parse_lsr(data, source["kind"])
             if source["output"] == "SpeedtestInternational.mrs":
-                records = [
-                    record for record in records if record[1].lower() not in SPEEDTEST_EXCLUDED_DOMAINS
+                if len(records) < MIN_SPEEDTEST_DOMAIN_RECORDS:
+                    raise RuntimeError(
+                        f"Kelee Speedtest domain source shrank to {len(records)} rules; "
+                        f"at least {MIN_SPEEDTEST_DOMAIN_RECORDS} are required"
+                    )
+                filtered_records = [
+                    record
+                    for record in records
+                    if not (
+                        record[0] in {"DOMAIN", "HOST"}
+                        and record[1].lower() in mainland_speedtest_domains
+                    )
                 ]
-                records = list(dict.fromkeys([*records, *speedtest_extras]))
-                entries = records_to_entries(records)
+                print(
+                    f"Kelee international base: {len(records)} domain rules, "
+                    f"excluded {len(records) - len(filtered_records)} known mainland endpoint(s)"
+                )
+                merged_records = compact_domain_records(filtered_records)
+                all_source_records = list(filtered_records)
+                for group_name, group_records, group_url in speedtest_groups:
+                    coverage = domain_coverage_index(merged_records)
+                    new_coverage = sum(
+                        not domain_record_is_covered(record, coverage)
+                        for record in group_records
+                    )
+                    covered = len(group_records) - new_coverage
+                    all_source_records.extend(group_records)
+                    merged_records = compact_domain_records([*merged_records, *group_records])
+                    print(
+                        f"  {group_name}: {len(group_records)} validated rules, "
+                        f"{covered} already covered, {new_coverage} additional; {group_url}"
+                    )
+                final_coverage = domain_coverage_index(merged_records)
+                missing = [
+                    record
+                    for record in all_source_records
+                    if not domain_record_is_covered(record, final_coverage)
+                ]
+                if missing:
+                    raise RuntimeError(
+                        f"Speedtest semantic compaction lost {len(missing)} source rule(s): {missing[:5]}"
+                    )
+                print(
+                    f"Speedtest semantic compaction: {len(all_source_records)} source records -> "
+                    f"{len(merged_records)} rules with identical-or-broader reviewed coverage"
+                )
+                records = merged_records
+            elif source["output"] == "SpeedtestInternational_ipcidr.mrs" and len(records) < MIN_SPEEDTEST_IP_RECORDS:
+                raise RuntimeError(
+                    f"Kelee Speedtest IP source shrank to {len(records)} rules; "
+                    f"at least {MIN_SPEEDTEST_IP_RECORDS} are required"
+                )
+            entries = records_to_entries(records)
             input_path = workspace / f"{source['output']}.txt"
             temporary_output = workspace / source["output"]
             input_path.write_text("\n".join(entries) + "\n", encoding="utf-8")
@@ -512,8 +894,6 @@ def main() -> int:
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
             print(f"{source['srs_output']}: {len(records)} Loon records from {used_url}")
-            if source["output"] == "SpeedtestInternational.mrs":
-                print(f"  merged {len(speedtest_extras)} supplemental domains from {speedtest_extras_url}")
     return 0
 
 
