@@ -28,7 +28,7 @@ DOMAIN_SET_ENTRY = re.compile(
 )
 SPEEDTEST_NAMESPACE_LABEL = re.compile(
     r"^(?:speedtest[a-z0-9-]*|ookla[a-z0-9-]*|librespeed[a-z0-9-]*|"
-    r"speed|speed-test|nperf|testspeed|test-speed|testdevelocidad|"
+    r"speed|speed-test|st|myspeed|nperf|testspeed|test-speed|testdevelocidad|"
     r"testevelocidade|velocimetro|medidor|bandwidth|broadband|perf)$"
 )
 NODESEEK_SOURCES = (
@@ -53,9 +53,6 @@ SPEEDTEST_V2FLY_CATEGORY_SOURCES = (
 SPEEDTEST_SUKKA_STATIC_SOURCES = (
     "https://raw.githubusercontent.com/SukkaW/Surge/master/Source/domainset/speedtest.conf",
     "https://cdn.jsdelivr.net/gh/SukkaW/Surge@master/Source/domainset/speedtest.conf",
-)
-SPEEDTEST_SUKKA_PUBLISHED_SOURCES = (
-    "https://ruleset.skk.moe/List/domainset/speedtest.conf",
 )
 SPEEDTEST_SUKKA_OOKLA_SOURCES = (
     "https://speedtest-net-servers.cdn.skk.moe/servers.json",
@@ -530,6 +527,7 @@ def speedtest_namespace_suffixes(
     blocked_domains: set[str],
 ) -> set[str]:
     candidates: dict[str, set[str]] = {}
+    minimum_hosts: dict[str, int] = {}
     for domain in exact_domains:
         labels = domain.split(".")
         for index, label in enumerate(labels[:-1]):
@@ -544,11 +542,12 @@ def speedtest_namespace_suffixes(
             ):
                 continue
             candidates.setdefault(namespace, set()).add(domain)
+            minimum_hosts[namespace] = 3 if label == "st" else 2
 
     return {
         namespace
         for namespace, covered_domains in candidates.items()
-        if len(covered_domains) >= 2
+        if len(covered_domains) >= minimum_hosts[namespace]
     }
 
 
@@ -588,7 +587,10 @@ def compact_domain_records(
     compact_exact = sorted(
         domain
         for domain in exact
-        if not any(domain == suffix or domain.endswith(f".{suffix}") for suffix in compact_suffixes)
+        if not any(
+            domain == suffix or domain.endswith(f".{suffix}")
+            for suffix in compact_suffixes
+        )
     )
     return [
         *(('DOMAIN-SUFFIX', suffix) for suffix in sorted(compact_suffixes)),
@@ -698,13 +700,6 @@ def speedtest_source_groups(
         lambda data: domainset_records(data, "Sukka speedtest.conf"),
         100,
     )
-    collect(
-        "Sukka published domainset",
-        SPEEDTEST_SUKKA_PUBLISHED_SOURCES,
-        lambda data: domainset_records(data, "Sukka published speedtest.conf"),
-        3_000,
-    )
-
     def parse_sukka_ookla(data: bytes) -> list[tuple[str, str]]:
         records, excluded = server_json_records(
             data,
