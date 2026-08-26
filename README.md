@@ -40,7 +40,9 @@ GitHub Actions 每 3 小时自动下载以下规则与服务器目录，交叉�
 
 - [SpeedtestInternational.lsr](https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr)
 - [MetaCubeX speedtest.mrs](https://github.com/MetaCubeX/meta-rules-dat/blob/meta/geo/geosite/speedtest.mrs)
-- [SukkaW Speedtest](https://github.com/SukkaW/Surge/blob/master/Source/domainset/speedtest.conf)（人工维护的平台后缀、实时 Ookla 服务器与 LibreSpeed 镜像）
+- [SukkaW Speedtest](https://github.com/SukkaW/Surge/blob/master/Source/domainset/speedtest.conf)（人工维护的平台后缀）
+- [Sukka 已发布的累积 Speedtest 清单](https://ruleset.skk.moe/List/domainset/speedtest.conf)（保留历史及备用服务器）
+- Sukka 实时 Ookla 服务器目录与 LibreSpeed 镜像
 - [LibreSpeed 官方服务器清单](https://github.com/librespeed/speedtest/blob/master/server-list.json)
 - [oneclickvirt Speedtest 快照](https://github.com/oneclickvirt/speedtest/blob/main/model/snapshot/speedtest-servers.json)
 - [blackmatrix7 Speedtest](https://github.com/blackmatrix7/ios_rule_script/blob/master/rule/Clash/Speedtest/Speedtest.list)
@@ -72,7 +74,7 @@ Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如�
 
 `SpeedtestInternational_ipcidr.srs`、`TelegramSG.srs` 和 `TelegramNL.srs` 是 IP rule-set；`Nodeseek.srs`、`SpeedtestInternational.srs` 和 `Webrtc_domain.srs` 是域名 rule-set。Speedtest 域名和 IP 规则需要分别引用。
 
-Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 使用 Kelee 大规模国际服务器清单作为主体，再与 MetaCubeX、SukkaW 实时 Ookla 目录、LibreSpeed 官方清单、oneclickvirt、blackmatrix7 和人工复核的国际测速平台后缀取并集。带有中国大陆元数据的精确服务器会被排除，香港、台湾及其他境外服务器保留。经过审核的域名后缀会替代其已经覆盖的精确主机，减少规则数量但不缩小覆盖范围；脚本会逐条验证压缩前后的覆盖关系。IP `.mrs` 与 `.srs` 只收录上游明确提供的测速 IP 规则，不把动态域名强行解析成容易过期或误匹配的 IP。每个来源都有格式和最小规模检查，补充源临时失效时会保留上一版已验证规则，避免更新后丢失服务器。两种格式始终由同一个最终集合生成并进行语义一致性校验。
+Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为独立的规则文件。域名 `.mrs` 与 `.srs` 使用 Kelee 大规模国际服务器清单作为主体，再与 MetaCubeX、SukkaW 人工维护及已发布的累积清单、Sukka 实时 Ookla 目录、LibreSpeed 官方清单、oneclickvirt、blackmatrix7 和人工复核的国际测速平台后缀取并集。带有中国大陆元数据的精确服务器和 `.cn` 域名会被排除，香港、台湾及其他境外服务器保留。经过审核的域名后缀会替代其已经覆盖的精确主机；同一个明确命名为 `speedtest`、`ookla` 或 `librespeed` 等测速专用子域下至少出现两个已验证服务器时，也会提升为该专用子域的后缀规则。这样既覆盖未来新增服务器，又不会把运营商的整个普通主域名纳入测速规则。脚本会逐条验证压缩前的每条规则仍被最终集合覆盖，不使用宽泛的 `DOMAIN-KEYWORD,speedtest`。IP `.mrs` 与 `.srs` 只收录上游明确提供的测速 IP 规则，不把动态域名强行解析成容易过期或误匹配的 IP。每个来源都有格式和最小规模检查，补充源临时失效时会保留上一版已验证规则，避免更新后丢失服务器。两种格式始终由同一个最终集合生成并进行语义一致性校验。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
 

@@ -24,6 +24,11 @@ MIRROR_BRANCH = "Loon"
 DOMAIN_SET_ENTRY = re.compile(
     r"^(?:\+\.)?(?:[A-Za-z0-9_*-]+\.)+[A-Za-z0-9_*-]+$"
 )
+SPEEDTEST_NAMESPACE_LABEL = re.compile(
+    r"^(?:speedtest[a-z0-9-]*|ookla[a-z0-9-]*|librespeed[a-z0-9-]*|"
+    r"speed|speed-test|nperf|testspeed|test-speed|testdevelocidad|"
+    r"testevelocidade|velocimetro|medidor|bandwidth|broadband|perf)$"
+)
 NODESEEK_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/nodeseek.mrs",
@@ -42,6 +47,9 @@ SPEEDTEST_METACUBEX_SOURCES = (
 SPEEDTEST_SUKKA_STATIC_SOURCES = (
     "https://raw.githubusercontent.com/SukkaW/Surge/master/Source/domainset/speedtest.conf",
     "https://cdn.jsdelivr.net/gh/SukkaW/Surge@master/Source/domainset/speedtest.conf",
+)
+SPEEDTEST_SUKKA_PUBLISHED_SOURCES = (
+    "https://ruleset.skk.moe/List/domainset/speedtest.conf",
 )
 SPEEDTEST_SUKKA_OOKLA_SOURCES = (
     "https://speedtest-net-servers.cdn.skk.moe/servers.json",
@@ -81,12 +89,15 @@ SPEEDTEST_FIXED_SUFFIXES = (
     "speedtest.org",
     "testmy.net",
 )
-SPEEDTEST_EXCLUDED_DOMAINS = {"speedtest.dukekunshan.edu.cn"}
+SPEEDTEST_EXCLUDED_DOMAINS = {
+    "7h15.ru1353t.1s.m4d3.by.5ukk4w.skk.moe",
+    "speedtest.dukekunshan.edu.cn",
+}
 MIN_SPEEDTEST_DOMAIN_RECORDS = 15_000
 MIN_SPEEDTEST_IP_RECORDS = 5
 MIN_SUKKA_OOKLA_HOSTS = 1_000
 MIN_LIBRESPEED_HOSTS = 10
-MIN_INDEPENDENT_SPEEDTEST_SOURCES = 4
+MIN_INDEPENDENT_SPEEDTEST_SOURCES = 5
 SOURCES = (
     {
         "output": "SpeedtestInternational.mrs",
@@ -373,9 +384,13 @@ def server_json_records(
     seen: set[str] = set()
     mainland: set[str] = set()
     for item in json_list(data, source_name):
-        is_mainland = str(item.get("cc", "")).upper() == "CN" or str(
-            item.get("country", "")
-        ).strip().lower() == "china"
+        country_code = str(item.get("cc", "")).strip().upper()
+        country_name = str(item.get("country", "")).strip().lower()
+        # ISO region codes distinguish Hong Kong from mainland China even when
+        # a provider labels both with the broad country name "China".
+        is_mainland = country_code == "CN" or (
+            not country_code and country_name == "china"
+        )
         for field in fields:
             hostname = normalized_hostname(item.get(field))
             if not hostname:
@@ -446,6 +461,23 @@ def loon_domain_records(data: bytes, source_name: str) -> list[tuple[str, str]]:
     return records
 
 
+def speedtest_namespace_suffixes(exact_domains: set[str]) -> set[str]:
+    candidates: dict[str, set[str]] = {}
+    for domain in exact_domains:
+        labels = domain.split(".")
+        for index, label in enumerate(labels[:-1]):
+            if not SPEEDTEST_NAMESPACE_LABEL.fullmatch(label):
+                continue
+            namespace = ".".join(labels[index:])
+            candidates.setdefault(namespace, set()).add(domain)
+
+    return {
+        namespace
+        for namespace, covered_domains in candidates.items()
+        if len(covered_domains) >= 2
+    }
+
+
 def compact_domain_records(records: list[tuple[str, str]]) -> list[tuple[str, str]]:
     exact: set[str] = set()
     suffixes: set[str] = set()
@@ -455,6 +487,11 @@ def compact_domain_records(records: list[tuple[str, str]]) -> list[tuple[str, st
             suffixes.add(value)
         elif rule_type in {"DOMAIN", "HOST"}:
             exact.add(value)
+
+    # Promote only explicitly Speedtest-named namespaces with multiple verified
+    # servers. This keeps future hosts covered without widening an ISP's whole
+    # registrable domain (for example, never promoting all of rogers.com).
+    suffixes.update(speedtest_namespace_suffixes(exact))
 
     compact_suffixes: list[str] = []
     for suffix in sorted(suffixes, key=lambda value: (value.count("."), len(value), value)):
@@ -499,6 +536,17 @@ def domain_record_is_covered(
     return value in exact or any(value == suffix or value.endswith(f".{suffix}") for suffix in suffixes)
 
 
+def excluded_speedtest_domain(
+    record: tuple[str, str],
+    mainland_domains: set[str],
+) -> bool:
+    rule_type, raw_value = record
+    if rule_type not in {"DOMAIN", "HOST", "DOMAIN-SUFFIX", "HOST-SUFFIX"}:
+        return False
+    value = raw_value.lower().removeprefix("*.").removeprefix(".").rstrip(".")
+    return value in mainland_domains or value.endswith(".cn")
+
+
 def speedtest_source_groups(
     mihomo: Path,
     workspace: Path,
@@ -529,6 +577,12 @@ def speedtest_source_groups(
         SPEEDTEST_SUKKA_STATIC_SOURCES,
         lambda data: domainset_records(data, "Sukka speedtest.conf"),
         100,
+    )
+    collect(
+        "Sukka published domainset",
+        SPEEDTEST_SUKKA_PUBLISHED_SOURCES,
+        lambda data: domainset_records(data, "Sukka published speedtest.conf"),
+        3_000,
     )
 
     def parse_sukka_ookla(data: bytes) -> list[tuple[str, str]]:
@@ -584,7 +638,7 @@ def speedtest_source_groups(
         "oneclickvirt snapshot",
         SPEEDTEST_ONECLICK_SOURCES,
         parse_oneclick,
-        20,
+        100,
     )
     collect(
         "blackmatrix7",
@@ -826,8 +880,12 @@ def main() -> int:
         update_nodeseek(binary, singbox, workspace)
         update_webrtc(binary, singbox, workspace)
         speedtest_groups, mainland_speedtest_domains = speedtest_source_groups(binary, workspace)
+        source_cache: dict[tuple[str, str], tuple[bytes, str]] = {}
         for source in SOURCES:
-            data, used_url = download_source(source)
+            cache_key = (source["url"], source["fallback"])
+            if cache_key not in source_cache:
+                source_cache[cache_key] = download_source(source)
+            data, used_url = source_cache[cache_key]
             records = parse_lsr_records(data, source["kind"])
             if source["output"] == "SpeedtestInternational.mrs":
                 if len(records) < MIN_SPEEDTEST_DOMAIN_RECORDS:
@@ -838,10 +896,7 @@ def main() -> int:
                 filtered_records = [
                     record
                     for record in records
-                    if not (
-                        record[0] in {"DOMAIN", "HOST"}
-                        and record[1].lower() in mainland_speedtest_domains
-                    )
+                    if not excluded_speedtest_domain(record, mainland_speedtest_domains)
                 ]
                 print(
                     f"Kelee international base: {len(records)} domain rules, "
@@ -850,17 +905,24 @@ def main() -> int:
                 merged_records = compact_domain_records(filtered_records)
                 all_source_records = list(filtered_records)
                 for group_name, group_records, group_url in speedtest_groups:
+                    filtered_group = [
+                        record
+                        for record in group_records
+                        if not excluded_speedtest_domain(record, mainland_speedtest_domains)
+                    ]
+                    excluded_count = len(group_records) - len(filtered_group)
                     coverage = domain_coverage_index(merged_records)
                     new_coverage = sum(
                         not domain_record_is_covered(record, coverage)
-                        for record in group_records
+                        for record in filtered_group
                     )
-                    covered = len(group_records) - new_coverage
-                    all_source_records.extend(group_records)
-                    merged_records = compact_domain_records([*merged_records, *group_records])
+                    covered = len(filtered_group) - new_coverage
+                    all_source_records.extend(filtered_group)
+                    merged_records = compact_domain_records([*merged_records, *filtered_group])
                     print(
                         f"  {group_name}: {len(group_records)} validated rules, "
-                        f"{covered} already covered, {new_coverage} additional; {group_url}"
+                        f"{excluded_count} excluded, {covered} already covered, "
+                        f"{new_coverage} additional; {group_url}"
                     )
                 final_coverage = domain_coverage_index(merged_records)
                 missing = [
