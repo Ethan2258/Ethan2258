@@ -8,22 +8,15 @@ const config = parser.parse($content ?? $files[0]);
 const subscriptionURL =
   url || "https://sub.110726.com/download/collection/Sub";
 
-const artifactOptions = {
-  type: "subscription",
-  name: "Sub",
-  platform: "sing-box",
-  produceOpts: {
-    "include-unsupported-proxy": includeUnsupportedProxy === "true",
-  },
-  subscription: {
-    name: "Sub",
-    url: subscriptionURL,
-    source: "remote",
-  },
-};
-
-const artifact = await produceArtifact(artifactOptions);
-const produced = typeof artifact === "string" ? JSON.parse(artifact) : artifact;
+const response = await $substore.http.get({
+  url: subscriptionURL,
+  headers: { "user-agent": "sing-box" },
+  timeout: 30000,
+});
+if (response.statusCode < 200 || response.statusCode >= 300) {
+  throw new Error(`远程订阅请求失败：HTTP ${response.statusCode}`);
+}
+const produced = parser.parse(response.body);
 const nodeOutbounds = Array.isArray(produced)
   ? produced
   : produced.outbounds || [];
