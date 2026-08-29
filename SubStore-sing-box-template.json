@@ -287,7 +287,7 @@
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
       "interval": "5m",
-      "tolerance": 3
+      "tolerance": 2
     },
     {
       "tag": "TW",
@@ -295,7 +295,7 @@
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
       "interval": "5m",
-      "tolerance": 3
+      "tolerance": 2
     },
     {
       "tag": "SG",
@@ -303,7 +303,7 @@
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
       "interval": "5m",
-      "tolerance": 3
+      "tolerance": 2
     },
     {
       "tag": "EU",
@@ -311,7 +311,7 @@
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
       "interval": "5m",
-      "tolerance": 3
+      "tolerance": 2
     },
     {
       "tag": "MO",
@@ -319,7 +319,7 @@
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
       "interval": "5m",
-      "tolerance": 3
+      "tolerance": 2
     }
   ],
   "route": {
