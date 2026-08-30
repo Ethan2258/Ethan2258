@@ -14,6 +14,7 @@
       "external_controller": "0.0.0.0:9090",
       "external_ui": "zashboard",
       "secret": "singbox",
+      "external_ui_download_detour": "Proxy",
       "external_ui_download_url": "https://github.com/musiyun124/zashboard/archive/refs/heads/gh-pages-no-fonts.zip"
     },
     "debug": {
@@ -324,6 +325,7 @@
   ],
   "route": {
     "default_domain_resolver": "dns-direct",
+    "default_http_client": "s-download",
     "rule_set": [
       {
         "type": "remote",
