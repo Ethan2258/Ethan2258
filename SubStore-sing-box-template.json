@@ -458,6 +458,11 @@
         "outbound": "direct"
       },
       {
+        "port": 7680,
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
         "rule_set": [
           "googlefcm"
         ],
