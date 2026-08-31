@@ -157,8 +157,9 @@
     {
       "type": "mixed",
       "tag": "mixed-in",
-      "listen": "::",
-      "listen_port": 7890
+      "listen": "127.0.0.1",
+      "listen_port": 7890,
+      "set_system_proxy": true
     }
   ],
   "outbounds": [
