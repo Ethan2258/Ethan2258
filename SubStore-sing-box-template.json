@@ -257,9 +257,9 @@
       ],
       "default": "Proxy"
     },
-    {
-      "tag": "Google",
-      "type": "selector",
+      {
+        "tag": "Google",
+        "type": "selector",
       "outbounds": [
         "Proxy",
         "HK",
@@ -268,10 +268,23 @@
         "EU",
         "MO"
       ],
-      "default": "Proxy"
-    },
-    {
-      "tag": "HK",
+        "default": "Proxy"
+      },
+      {
+        "tag": "Discord",
+        "type": "selector",
+        "outbounds": [
+          "Proxy",
+          "HK",
+          "TW",
+          "SG",
+          "EU",
+          "MO"
+        ],
+        "default": "Proxy"
+      },
+      {
+        "tag": "HK",
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.google.com/generate_204",
@@ -351,6 +364,7 @@
           "googlefcm",
           "youtube",
           "nodeseek",
+          "discord",
           "cn"
         ],
         "format": "binary",
@@ -486,6 +500,13 @@
         ],
         "action": "route",
         "outbound": "Google"
+      },
+      {
+        "rule_set": [
+          "discord"
+        ],
+        "action": "route",
+        "outbound": "Discord"
       },
       {
         "rule_set": [

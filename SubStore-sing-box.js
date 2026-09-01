@@ -36,6 +36,7 @@ const requiredGroups = [
   "NodeSeek",
   "YouTube",
   "Google",
+  "Discord",
   "HK",
   "TW",
   "SG",
@@ -50,6 +51,7 @@ const businessGroups = [
   "NodeSeek",
   "YouTube",
   "Google",
+  "Discord",
 ];
 const regionPatterns = {
   HK: /🇭🇰|香港|\b(?:hk|hong\s*kong)\b/i,
