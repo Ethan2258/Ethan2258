@@ -922,10 +922,28 @@ def singbox_rule(domain: list[str] | None = None, domain_suffix: list[str] | Non
     return rule
 
 
+def current_srs_source_version(binary: Path) -> int:
+    result = subprocess.run(
+        [str(binary), "rule-set", "upgrade", "stdin"],
+        input=json.dumps({"version": 1, "rules": []}),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"Sing-box rule-set version detection failed: {detail}")
+    upgraded = json.loads(result.stdout)
+    version = upgraded.get("version")
+    if type(version) is not int or version < 1 or upgraded.get("rules", []) != []:
+        raise RuntimeError("Sing-box returned an invalid upgraded rule-set version")
+    return version
+
+
 def compile_srs(binary: Path, rules: list[dict[str, list[str]]], output_path: Path) -> None:
+    source_version = current_srs_source_version(binary)
     source_path = output_path.with_suffix(".json")
     source_path.write_text(
-        json.dumps({"version": 3, "rules": rules}, ensure_ascii=False, indent=2) + "\n",
+        json.dumps({"version": source_version, "rules": rules}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     command = [str(binary), "rule-set", "compile", str(source_path), "-o", str(output_path)]
@@ -935,6 +953,13 @@ def compile_srs(binary: Path, rules: list[dict[str, list[str]]], output_path: Pa
         raise RuntimeError(f"Sing-box SRS compilation failed: {detail}")
     if not output_path.is_file() or output_path.read_bytes()[:3] != SRS_MAGIC:
         raise RuntimeError(f"{output_path.name}: compiler did not produce a valid SRS file")
+    data = output_path.read_bytes()
+    if len(data) <= 4 or not 1 <= data[3] <= source_version:
+        raise RuntimeError(f"{output_path.name}: compiler produced an invalid SRS version")
+    print(
+        f"{output_path.name}: latest source format v{source_version}, "
+        f"official compiler selected binary format v{data[3]}"
+    )
 
 
 def records_to_srs_rules(records: list[tuple[str, str]], kind: str) -> list[dict[str, list[str]]]:

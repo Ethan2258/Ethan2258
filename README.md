@@ -51,7 +51,7 @@ GitHub Actions 每 3 小时自动下载以下规则与服务器目录，交叉�
 
 同时从 [MetaCubeX meta-rules-dat](https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs) 拉取 NodeSeek MRS，转换并同步到 `Nodeseek.yaml` 和 `Nodeseek.srs`。
 
-每次同步都会从 Sing-box 官方 `releases/latest` API 下载最新版本的编译器，再从各自源文件直接编译 Sing-box `.srs`，包括 Speedtest、Telegram 和 WebRTC。`.srs` 是 Sing-box 原生二进制 rule-set，直接在 Sing-box 中使用，不要把 `.mrs` 改名为 `.srs`。任务会打印实际使用的 Sing-box 版本，并校验生成文件的官方 `SRS` 文件头。
+每次同步都会从 Sing-box 官方 `releases/latest` API 下载最新版本的编译器，再从各自源文件直接编译 Sing-box `.srs`，包括 Speedtest、Telegram 和 WebRTC。`.srs` 是 Sing-box 原生二进制 rule-set，直接在 Sing-box 中使用，不要把 `.mrs` 改名为 `.srs`。任务会打印实际使用的 Sing-box 版本，并校验生成文件的官方 `SRS` 文件头。编译前通过该官方核心的 `rule-set upgrade` 探测最新源格式，不再固定为 JSON v3；所有 SRS 都用探测到的最新源格式生成，并记录源格式和编译器实际选择的二进制版本。截至 2026-09-06，官方稳定版 1.14.0 的最新源格式为 v5，但官方编译器会将仅包含域名、域名后缀、关键词或 IP 网段的规则自动编译为兼容的二进制 v2。这是官方的格式选择逻辑，不代表使用旧编译器；不会手动抬高 SRS 文件头版本，也不会添加无关字段强制生成 v5。
 
 Sing-box 使用 `.srs` 时，远程规则集应指定 `format: binary`，例如：
 
