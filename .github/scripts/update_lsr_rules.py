@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import http.client
 import ipaddress
 import json
@@ -12,6 +13,8 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from compression import zstd
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -40,6 +43,12 @@ WEBRTC_SOURCES = (
     "https://cdn.jsdelivr.net/gh/MeALiYeYe/ProxyConfigFiles@main/Mihomo/rule/WebRTC/WebRTC.mrs",
     "https://raw.githubusercontent.com/milangree/rules/main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
     "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
+)
+SPEEDTEST_KELEE_SOURCES = (
+    "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
+    "https://raw.githubusercontent.com/ClaraCora/ege/main/kelee/SpeedtestInternational.lsr",
+    "https://raw.githubusercontent.com/linnux-x/surge/main/Rule/SourceSnapshots/SpeedtestInternational.lsr",
+    f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/Lsr/SpeedtestInternational.lsr",
 )
 SPEEDTEST_METACUBEX_SOURCES = (
     "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/speedtest.mrs",
@@ -178,6 +187,61 @@ def download_first(urls: tuple[str, ...]) -> tuple[bytes, str]:
         except (OSError, urllib.error.URLError, RuntimeError) as error:
             failures.append(f"{url}: {error}")
     raise RuntimeError("; ".join(failures))
+
+
+def download_speedtest_source() -> tuple[bytes, str]:
+    candidates = []
+    for url in SPEEDTEST_KELEE_SOURCES:
+        try:
+            data = fetch(url)
+            text = data.decode("utf-8-sig")
+            timestamp_match = re.search(
+                r"^#\s*UpdateTime:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s*$",
+                text,
+                re.MULTILINE,
+            )
+            count_match = re.search(r"^#\s*RuleCount:\s*(\d+)\s*$", text, re.MULTILINE)
+            if not timestamp_match or not count_match:
+                raise ValueError("missing upstream UpdateTime or RuleCount")
+            updated = datetime.strptime(timestamp_match.group(1), "%Y-%m-%d %H:%M:%S")
+            domains = parse_lsr_records(data, "domain")
+            networks = parse_lsr_records(data, "ipcidr")
+            if len(domains) < MIN_SPEEDTEST_DOMAIN_RECORDS or len(networks) < MIN_SPEEDTEST_IP_RECORDS:
+                raise ValueError("source is below the minimum domain/IP rule count")
+            if len(domains) + len(networks) != int(count_match.group(1)):
+                raise ValueError("RuleCount does not match the parsed unique rules")
+            if any(kind not in {"DOMAIN", "DOMAIN-SUFFIX", "HOST", "HOST-SUFFIX"} for kind, _ in domains):
+                raise ValueError("source contains unsupported domain matching semantics")
+            fingerprint = frozenset((*domains, *networks))
+            candidates.append((updated, data, url, fingerprint))
+            print(f"Kelee candidate: {updated}, {len(domains)} domains, {len(networks)} IP rules; {url}")
+        except (OSError, RuntimeError, ValueError, http.client.HTTPException) as error:
+            print(f"WARNING: Kelee source unavailable or invalid: {url}: {error}")
+    if not candidates:
+        raise RuntimeError("No valid Kelee source is available; existing rule files are not replaced")
+    latest = max(candidate[0] for candidate in candidates)
+    state_path = ROOT / ".github/speedtest-source-state.json"
+    if state_path.exists():
+        previous = json.loads(state_path.read_text(encoding="utf-8"))
+        previous_updated = datetime.strptime(previous["updated_at"], "%Y-%m-%d %H:%M:%S")
+        if latest < previous_updated:
+            raise RuntimeError(f"Kelee source would roll back from {previous_updated} to {latest}")
+    freshest = [candidate for candidate in candidates if candidate[0] == latest]
+    if any(candidate[3] != freshest[0][3] for candidate in freshest[1:]):
+        raise RuntimeError("Kelee sources disagree at the same UpdateTime; refusing ambiguous data")
+    _, data, url, _ = freshest[0]
+    print(f"Kelee selected source: {latest}; {url}")
+    if url != SPEEDTEST_KELEE_SOURCES[0]:
+        print("WARNING: Using the newest validated Kelee mirror; original-site freshness is not confirmed")
+    state = {
+        "updated_at": latest.strftime("%Y-%m-%d %H:%M:%S"),
+        "source": url,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "domain_rules": len(parse_lsr_records(data, "domain")),
+        "ip_rules": len(parse_lsr_records(data, "ipcidr")),
+    }
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    return data, url
 
 
 def parse_lsr_records(data: bytes, kind: str) -> list[tuple[str, str]]:
@@ -321,6 +385,18 @@ def convert(binary: Path, input_path: Path, output_path: Path, kind: str) -> Non
         raise RuntimeError(f"Mihomo conversion failed: {detail}")
     if not output_path.is_file() or output_path.read_bytes()[:4] != MRS_MAGIC:
         raise RuntimeError(f"{output_path.name}: converter did not produce a valid MRS file")
+
+
+def compress_mrs_losslessly(output_path: Path) -> None:
+    original = output_path.read_bytes()
+    payload = zstd.decompress(original)
+    compressed = zstd.compress(payload, level=19)
+    if len(compressed) >= len(original):
+        return
+    if zstd.decompress(compressed) != payload:
+        raise RuntimeError(f"{output_path.name}: lossless compression verification failed")
+    output_path.write_bytes(compressed)
+    print(f"{output_path.name}: lossless compression {len(original)} -> {len(compressed)} bytes")
 
 
 def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> None:
@@ -999,7 +1075,11 @@ def main() -> int:
         for source in SOURCES:
             cache_key = (source["url"], source["fallback"])
             if cache_key not in source_cache:
-                source_cache[cache_key] = download_source(source)
+                source_cache[cache_key] = (
+                    download_speedtest_source()
+                    if source["output"].startswith("SpeedtestInternational")
+                    else download_source(source)
+                )
             data, used_url = source_cache[cache_key]
             records = parse_lsr_records(data, source["kind"])
             if source["output"] == "SpeedtestInternational.mrs":
@@ -1100,6 +1180,8 @@ def main() -> int:
             temporary_output = workspace / source["output"]
             input_path.write_text("\n".join(entries) + "\n", encoding="utf-8")
             convert(binary, input_path, temporary_output, source["kind"])
+            if source["output"].startswith("SpeedtestInternational"):
+                compress_mrs_losslessly(temporary_output)
             temporary_output.replace(ROOT / source["output"])
             srs_output = workspace / source["srs_output"]
             srs_rules = records_to_srs_rules(records, source["kind"])
