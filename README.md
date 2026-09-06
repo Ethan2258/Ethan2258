@@ -1,6 +1,6 @@
 # Ethan2258
 
-Mihomo / Egern / sing-box 规则、Sub-Store 模板与图标。
+Mihomo / Egern / sing-box 规则与图标。
 
 ## 规则下载
 
@@ -16,12 +16,9 @@ Mihomo / Egern / sing-box 规则、Sub-Store 模板与图标。
 - **Mihomo**：设置 `format: mrs`；域名规则用 `behavior: domain`，IP 规则用 `behavior: ipcidr`。
 - **sing-box**：使用 `type: remote`、`format: binary` 并在路由中引用。测速域名与 IP 分别引用，MRS/SRS 不可混用。
 
-## Sub-Store 与图标
+## 图标
 
-- [SubStore-sing-box-template.json](SubStore-sing-box-template.json)：个人 sing-box 配置模板。
-- [SubStore-sing-box.js](SubStore-sing-box.js)：配套节点填充脚本，`url` 参数可替换默认个人订阅。
-- 须有香港、台湾、新加坡、荷兰（`EU`）、澳门节点，缺失则停止输出。使用前检查核心兼容性、订阅地址、控制接口监听与密钥。
-- NodeSeek 图标：[SVG](nodeseek.svg) · [PNG](nodeseek.png)。
+NodeSeek：[SVG](nodeseek.svg) · [PNG](nodeseek.png)。
 
 ## 自动更新与来源
 
