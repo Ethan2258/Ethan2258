@@ -78,7 +78,7 @@ Speedtest Loon 源同时包含域名和 IP 网段，因此会拆成两个行为�
 
 可莉测速源会同时核对原站、`ClaraCora/ege`、`linnux-x/surge` 和旧版 `mihoyo-typ/KeleeOne` 镜像，验证 `UpdateTime`、声明条数及域名/IP 最小规模后选择时间最新的有效版本；同一时间戳的规则集合不一致会停止发布。镜像可用不代表原站已确认最新，日志会明确标注回退来源，避免旧镜像的成功下载掩盖长期未同步。`.github/speedtest-source-state.json` 保存已采用版本的时间和 SHA-256，后续来源时间倒退会拒绝发布。新可莉版本仍与以上其他上游合并，不替换整套多源规则。
 
-最终 Speedtest MRS 还会使用 Zstandard level 19 做无损重新压缩，仅在文件变小且解压字节完全一致时采用；域名、后缀和 IP 的匹配语义不变。SRS 继续由同一最终规则集合使用官方编译器生成。工作流使用 Python 3.14 的标准库，不增加第三方压缩依赖。
+最终 Speedtest 域名和 IP 的 MRS/SRS 都会进一步无损压缩：MRS 使用 Zstandard level 19；SRS 在官方编译后保留原始文件头和规则集版本，仅将 zlib 数据流用 Zopfli 重新编码。只有文件确实变小且解压字节完全一致时才采用，域名、后缀、IP 匹配语义和客户端格式均不变；较大的结果不会覆盖原文件。工作流使用 Python 3.14，并固定安装 `zopfli==0.4.3`；压缩只发生在 GitHub Actions 生成阶段，客户端不需要安装额外组件。
 
 Speedtest 域名文件使用 `behavior: domain` 和 `format: mrs`；IP 网段文件使用 `behavior: ipcidr` 和 `format: mrs`。
 

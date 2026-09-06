@@ -13,10 +13,13 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import zlib
 from compression import zstd
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
+
+import zopfli.zlib
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -394,6 +397,20 @@ def compress_mrs_losslessly(output_path: Path) -> None:
     if len(compressed) >= len(original):
         return
     if zstd.decompress(compressed) != payload:
+        raise RuntimeError(f"{output_path.name}: lossless compression verification failed")
+    output_path.write_bytes(compressed)
+    print(f"{output_path.name}: lossless compression {len(original)} -> {len(compressed)} bytes")
+
+
+def compress_srs_losslessly(output_path: Path) -> None:
+    original = output_path.read_bytes()
+    if len(original) < 6 or original[:3] != SRS_MAGIC:
+        raise RuntimeError(f"{output_path.name}: invalid SRS header")
+    payload = zlib.decompress(original[4:])
+    compressed = original[:4] + zopfli.zlib.compress(payload, numiterations=15)
+    if len(compressed) >= len(original):
+        return
+    if zlib.decompress(compressed[4:]) != payload:
         raise RuntimeError(f"{output_path.name}: lossless compression verification failed")
     output_path.write_bytes(compressed)
     print(f"{output_path.name}: lossless compression {len(original)} -> {len(compressed)} bytes")
@@ -1186,6 +1203,11 @@ def main() -> int:
             srs_output = workspace / source["srs_output"]
             srs_rules = records_to_srs_rules(records, source["kind"])
             compile_srs(singbox, srs_rules, srs_output)
+            if source["srs_output"].startswith("SpeedtestInternational"):
+                compress_srs_losslessly(srs_output)
+                decompile_srs(
+                    singbox, srs_output, workspace / f"{source['srs_output']}.verified.json"
+                )
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
             print(f"{source['srs_output']}: {len(records)} Loon records from {used_url}")

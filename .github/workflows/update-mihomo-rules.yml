@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Install SRS compression dependency
+        run: python -m pip install --disable-pip-version-check --only-binary=:all: zopfli==0.4.3
+
       - name: Download and convert source rules
         run: python .github/scripts/update_lsr_rules.py
 
