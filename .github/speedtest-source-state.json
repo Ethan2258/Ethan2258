@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-08-22 05:18:32",
+  "updated_at": "2026-09-06 01:43:05",
   "source": "https://raw.githubusercontent.com/ClaraCora/ege/main/kelee/SpeedtestInternational.lsr",
-  "sha256": "624081287e01fc6cd480e2733a700048aa005ece1d0ff6a8c42038c2c939089a",
-  "domain_rules": 17683,
+  "sha256": "869f4ca55ab0c510506a41c426bdd402901811e3792b9ecc308e8e2cb1d1fecb",
+  "domain_rules": 17956,
   "ip_rules": 9
 }
