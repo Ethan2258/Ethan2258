@@ -10,8 +10,8 @@
       "rules": 6,
       "files": {
         "Nodeseek.yaml": {
-          "size": 134,
-          "sha256": "3bb2aa4705aae5d1759460c3a0eaa7bfd4dc572f3d9a27997ffabe942145087f"
+          "size": 127,
+          "sha256": "20f2b473634033137466d01c36be0a1dc05f7fa7792b4b6b3350197b9759076c"
         },
         "Nodeseek.mrs": {
           "size": 134,
@@ -42,8 +42,8 @@
       "rules": 18453,
       "files": {
         "SpeedtestInternational.mrs": {
-          "size": 172588,
-          "sha256": "f403c74dc3cf22337b1bbaa957efb0f65092e68344bd0d75001a827a274b83ab"
+          "size": 172854,
+          "sha256": "101e2f0dcdc2c32a0e85b9d22a29acd445208be8a64103f6962e05e9ebea3035"
         },
         "SpeedtestInternational.srs": {
           "size": 157355,
@@ -56,8 +56,8 @@
       "rules": 9,
       "files": {
         "SpeedtestInternational_ipcidr.mrs": {
-          "size": 71,
-          "sha256": "67de97022ef2318c7913f95a82d33e39b3b95f5fd3924db3cfa0bb6e0959c55b"
+          "size": 70,
+          "sha256": "10445b6e7eceb7e74aff56d9900629708aa669762f28ca1413a557323efe49f8"
         },
         "SpeedtestInternational_ipcidr.srs": {
           "size": 60,
