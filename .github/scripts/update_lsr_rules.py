@@ -3,6 +3,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import http.client
+import io
 import ipaddress
 import json
 import platform
@@ -16,11 +17,11 @@ import urllib.error
 import urllib.request
 import zipfile
 import zlib
-from compression import zstd
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import zstandard
 import zopfli.zlib
 
 
@@ -541,11 +542,15 @@ def convert(binary: Path, input_path: Path, output_path: Path, kind: str) -> Non
 
 def compress_mrs_losslessly(output_path: Path) -> None:
     original = output_path.read_bytes()
-    payload = zstd.decompress(original)
-    compressed = zstd.compress(payload, level=19)
+    decompressor = zstandard.ZstdDecompressor()
+    with decompressor.stream_reader(io.BytesIO(original)) as reader:
+        payload = reader.read()
+    compressed = zstandard.ZstdCompressor(level=19, threads=0).compress(payload)
     if len(compressed) >= len(original):
         return
-    if zstd.decompress(compressed) != payload:
+    with decompressor.stream_reader(io.BytesIO(compressed)) as reader:
+        verified = reader.read()
+    if verified != payload:
         raise RuntimeError(f"{output_path.name}: lossless compression verification failed")
     output_path.write_bytes(compressed)
     print(f"{output_path.name}: lossless compression {len(original)} -> {len(compressed)} bytes")
@@ -1302,7 +1307,7 @@ def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> int:
     entries = records_to_entries(records)
     yaml_text = "payload:\n" + "".join(f"  - {entry}\n" for entry in entries)
     temporary_output = workspace / "Nodeseek.yaml"
-    temporary_output.write_text(yaml_text, encoding="utf-8")
+    temporary_output.write_bytes(yaml_text.encode("utf-8"))
     mrs_output = workspace / "Nodeseek.mrs"
     mrs_output.write_bytes(data)
     verify_mrs(binary, mrs_output, "domain", records, workspace)
