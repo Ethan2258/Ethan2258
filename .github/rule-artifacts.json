@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "tools": {
+    "mihomo": "Mihomo Meta v1.19.30",
+    "sing_box": "sing-box version 1.14.0"
+  },
+  "rule_sets": {
+    "NodeSeek": {
+      "kind": "domain",
+      "rules": 6,
+      "files": {
+        "Nodeseek.yaml": {
+          "size": 134,
+          "sha256": "3bb2aa4705aae5d1759460c3a0eaa7bfd4dc572f3d9a27997ffabe942145087f"
+        },
+        "Nodeseek.mrs": {
+          "size": 134,
+          "sha256": "74371b7347075f9196949abfa4e94f5a1e8037863cf3711d80a30180978af414"
+        },
+        "Nodeseek.srs": {
+          "size": 110,
+          "sha256": "d6c421e43dfe33afee32b703a95dd570d7647efe0289c1dfee994915ec01323f"
+        }
+      }
+    },
+    "WebRTC": {
+      "kind": "domain",
+      "rules": 27,
+      "files": {
+        "Webrtc_domain.mrs": {
+          "size": 366,
+          "sha256": "1dea9010a70c0b498bbb8b7d8e856095460049da82ae796e72181b2a12f150bc"
+        },
+        "Webrtc_domain.srs": {
+          "size": 351,
+          "sha256": "94fc7f445f99dc9f7f3039db60ae09b2a6d97e8dadb99bd92c4c9fd2447d2bd5"
+        }
+      }
+    },
+    "SpeedtestInternational": {
+      "kind": "domain",
+      "rules": 18453,
+      "files": {
+        "SpeedtestInternational.mrs": {
+          "size": 172588,
+          "sha256": "f403c74dc3cf22337b1bbaa957efb0f65092e68344bd0d75001a827a274b83ab"
+        },
+        "SpeedtestInternational.srs": {
+          "size": 157355,
+          "sha256": "5b50a110d3c16aadf7492df207bd36c433f412986f6c099bebf27b509aa963ef"
+        }
+      }
+    },
+    "SpeedtestInternational_ipcidr": {
+      "kind": "ipcidr",
+      "rules": 9,
+      "files": {
+        "SpeedtestInternational_ipcidr.mrs": {
+          "size": 71,
+          "sha256": "67de97022ef2318c7913f95a82d33e39b3b95f5fd3924db3cfa0bb6e0959c55b"
+        },
+        "SpeedtestInternational_ipcidr.srs": {
+          "size": 60,
+          "sha256": "78f238785b28676df5a94a67edcf7916cfbab844a7dabb75a0a971365f231674"
+        }
+      }
+    },
+    "TelegramSG": {
+      "kind": "ipcidr",
+      "rules": 3,
+      "files": {
+        "TelegramSG.mrs": {
+          "size": 77,
+          "sha256": "128ea08a5c88e5833e3a5f4fc5b5b5ed72ec5dfa4f1cc6e123967ffa08adb097"
+        },
+        "TelegramSG.srs": {
+          "size": 57,
+          "sha256": "56d23f70a7d0c1fc5c7664200a93bd94c8ce4935c7f86cea8a3f719ff216bf73"
+        }
+      }
+    },
+    "TelegramNL": {
+      "kind": "ipcidr",
+      "rules": 5,
+      "files": {
+        "TelegramNL.mrs": {
+          "size": 95,
+          "sha256": "669a28327913f5c694bd6ed76a35431de14c8970c996e92f1ba9ce9c46d15e4b"
+        },
+        "TelegramNL.srs": {
+          "size": 74,
+          "sha256": "1410d389de52b37424d7d7f95995b0bc53b8d39d7b0fe3f0657c886495f10ae5"
+        }
+      }
+    }
+  }
+}

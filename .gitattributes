@@ -7,4 +7,5 @@
 *.yml text eol=lf
 
 *.mrs binary
+*.srs binary
 *.png binary

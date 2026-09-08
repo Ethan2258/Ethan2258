@@ -5,6 +5,7 @@ import hashlib
 import http.client
 import ipaddress
 import json
+import platform
 import re
 import stat
 import subprocess
@@ -13,6 +14,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import zipfile
 import zlib
 from compression import zstd
 from datetime import datetime
@@ -38,14 +40,15 @@ SPEEDTEST_NAMESPACE_LABEL = re.compile(
     r"testevelocidade|velocimetro|medidor|bandwidth|broadband|perf)$"
 )
 NODESEEK_SOURCES = (
-    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/nodeseek.mrs",
+    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nodeseek.mrs",
 )
 WEBRTC_SOURCES = (
     "https://raw.githubusercontent.com/MeALiYeYe/ProxyConfigFiles/main/Mihomo/rule/WebRTC/WebRTC.mrs",
     "https://cdn.jsdelivr.net/gh/MeALiYeYe/ProxyConfigFiles@main/Mihomo/rule/WebRTC/WebRTC.mrs",
-    "https://raw.githubusercontent.com/milangree/rules/main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
-    "https://cdn.jsdelivr.net/gh/milangree/rules@main/rules/mihomo/Webrtc/Webrtc_domain.mrs",
+)
+TELEGRAM_OFFICIAL_CIDR_SOURCES = (
+    "https://core.telegram.org/resources/cidr.txt",
 )
 SPEEDTEST_KELEE_SOURCES = (
     "https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr",
@@ -110,6 +113,9 @@ SPEEDTEST_EXCLUDED_DOMAINS = {
     "speedtest.dukekunshan.edu.cn",
     "speedtest.mfcyun.com",
 }
+SPEEDTEST_REJECTED_RECORDS = {
+    ("DOMAIN", "http"),
+}
 SPEEDTEST_SHARED_GLOBAL_SERVER_SUFFIXES = {
     "ooklaserver.net",
 }
@@ -141,6 +147,9 @@ SOURCES = (
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramSG.lsr",
         "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/TelegramSG.lsr",
+        "mirrors": (
+            "https://raw.githubusercontent.com/Qmxn/Tool/X/Loon/Rule/TelegramSG/TelegramSG.lsr",
+        ),
     },
     {
         "output": "TelegramNL.mrs",
@@ -148,8 +157,40 @@ SOURCES = (
         "kind": "ipcidr",
         "url": "https://rule.kelee.one/Loon/TelegramNL.lsr",
         "fallback": f"https://raw.githubusercontent.com/mihoyo-typ/KeleeOne/{MIRROR_BRANCH}/Rule/TelegramNL.lsr",
+        "mirrors": (
+            "https://raw.githubusercontent.com/Qmxn/Tool/X/Loon/Rule/TelegramNL/TelegramNL.lsr",
+        ),
     },
 )
+RULE_ARTIFACTS = {
+    "NodeSeek": {
+        "kind": "domain",
+        "files": ("Nodeseek.yaml", "Nodeseek.mrs", "Nodeseek.srs"),
+    },
+    "WebRTC": {
+        "kind": "domain",
+        "files": ("Webrtc_domain.mrs", "Webrtc_domain.srs"),
+    },
+    "SpeedtestInternational": {
+        "kind": "domain",
+        "files": ("SpeedtestInternational.mrs", "SpeedtestInternational.srs"),
+    },
+    "SpeedtestInternational_ipcidr": {
+        "kind": "ipcidr",
+        "files": (
+            "SpeedtestInternational_ipcidr.mrs",
+            "SpeedtestInternational_ipcidr.srs",
+        ),
+    },
+    "TelegramSG": {
+        "kind": "ipcidr",
+        "files": ("TelegramSG.mrs", "TelegramSG.srs"),
+    },
+    "TelegramNL": {
+        "kind": "ipcidr",
+        "files": ("TelegramNL.mrs", "TelegramNL.srs"),
+    },
+}
 
 
 def fetch(url: str) -> bytes:
@@ -178,8 +219,19 @@ def fetch(url: str) -> bytes:
     raise RuntimeError(f"download failed after {FETCH_ATTEMPTS} attempts: {last_error}")
 
 
-def download_source(source: dict[str, str]) -> tuple[bytes, str]:
-    return download_first((source["url"], source["fallback"]))
+def source_urls(source: dict) -> tuple[str, ...]:
+    return (source["url"], source["fallback"], *source.get("mirrors", ()))
+
+
+def download_rule_source(source: dict) -> tuple[bytes, str, list[tuple[str, str]]]:
+    failures: list[str] = []
+    for url in source_urls(source):
+        try:
+            data = fetch(url)
+            return data, url, parse_lsr_records(data, source["kind"])
+        except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+            failures.append(f"{url}: {error}")
+    raise RuntimeError("; ".join(failures))
 
 
 def download_first(urls: tuple[str, ...]) -> tuple[bytes, str]:
@@ -207,17 +259,28 @@ def download_speedtest_source() -> tuple[bytes, str]:
             if not timestamp_match or not count_match:
                 raise ValueError("missing upstream UpdateTime or RuleCount")
             updated = datetime.strptime(timestamp_match.group(1), "%Y-%m-%d %H:%M:%S")
-            domains = parse_lsr_records(data, "domain")
+            domains = parse_lsr_records(
+                data,
+                "domain",
+                SPEEDTEST_REJECTED_RECORDS,
+            )
             networks = parse_lsr_records(data, "ipcidr")
+            rejected_count = count_rejected_lsr_records(
+                data,
+                SPEEDTEST_REJECTED_RECORDS,
+            )
             if len(domains) < MIN_SPEEDTEST_DOMAIN_RECORDS or len(networks) < MIN_SPEEDTEST_IP_RECORDS:
                 raise ValueError("source is below the minimum domain/IP rule count")
-            if len(domains) + len(networks) != int(count_match.group(1)):
+            if len(domains) + len(networks) + rejected_count != int(count_match.group(1)):
                 raise ValueError("RuleCount does not match the parsed unique rules")
             if any(kind not in {"DOMAIN", "DOMAIN-SUFFIX", "HOST", "HOST-SUFFIX"} for kind, _ in domains):
                 raise ValueError("source contains unsupported domain matching semantics")
             fingerprint = frozenset((*domains, *networks))
             candidates.append((updated, data, url, fingerprint))
-            print(f"Kelee candidate: {updated}, {len(domains)} domains, {len(networks)} IP rules; {url}")
+            print(
+                f"Kelee candidate: {updated}, {len(domains)} domains, "
+                f"{len(networks)} IP rules, {rejected_count} reviewed invalid; {url}"
+            )
         except (OSError, RuntimeError, ValueError, http.client.HTTPException) as error:
             print(f"WARNING: Kelee source unavailable or invalid: {url}: {error}")
     if not candidates:
@@ -240,15 +303,22 @@ def download_speedtest_source() -> tuple[bytes, str]:
         "updated_at": latest.strftime("%Y-%m-%d %H:%M:%S"),
         "source": url,
         "sha256": hashlib.sha256(data).hexdigest(),
-        "domain_rules": len(parse_lsr_records(data, "domain")),
+        "domain_rules": len(
+            parse_lsr_records(data, "domain", SPEEDTEST_REJECTED_RECORDS)
+        ),
         "ip_rules": len(parse_lsr_records(data, "ipcidr")),
     }
     state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     return data, url
 
 
-def parse_lsr_records(data: bytes, kind: str) -> list[tuple[str, str]]:
+def parse_lsr_records(
+    data: bytes,
+    kind: str,
+    rejected_records: set[tuple[str, str]] | None = None,
+) -> list[tuple[str, str]]:
     text = data.decode("utf-8-sig")
+    rejected_records = rejected_records or set()
     entries: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
     domain_types = {"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "HOST", "HOST-SUFFIX"}
@@ -270,6 +340,8 @@ def parse_lsr_records(data: bytes, kind: str) -> list[tuple[str, str]]:
             continue
         if not value:
             raise ValueError(f"line {line_number}: empty rule value")
+        if (rule_type, value.lower()) in rejected_records:
+            continue
         if rule_type not in {
             "DOMAIN",
             "DOMAIN-SUFFIX",
@@ -283,7 +355,27 @@ def parse_lsr_records(data: bytes, kind: str) -> list[tuple[str, str]]:
                 f"line {line_number}: {rule_type} cannot be represented losslessly "
                 f"by a Mihomo {kind} MRS file"
             )
-        entry = (rule_type, value.removeprefix("*.").removeprefix("."))
+        value = value.removeprefix("*.").removeprefix(".").strip()
+        if rule_type in {"DOMAIN", "DOMAIN-SUFFIX", "HOST", "HOST-SUFFIX"}:
+            value = value.lower().rstrip(".")
+            if not DOMAIN_SET_ENTRY.fullmatch(value):
+                raise ValueError(f"line {line_number}: invalid domain value {value!r}")
+        elif rule_type == "DOMAIN-KEYWORD":
+            value = value.lower()
+        elif rule_type in {"IP-CIDR", "IP-CIDR6"}:
+            try:
+                network = ipaddress.ip_network(value, strict=False)
+            except ValueError as error:
+                raise ValueError(
+                    f"line {line_number}: invalid network {value!r}"
+                ) from error
+            expected_version = 6 if rule_type == "IP-CIDR6" else 4
+            if network.version != expected_version:
+                raise ValueError(
+                    f"line {line_number}: {rule_type} contains IPv{network.version}"
+                )
+            value = network.with_prefixlen
+        entry = (rule_type, value)
         if entry not in seen:
             entries.append(entry)
             seen.add(entry)
@@ -291,6 +383,21 @@ def parse_lsr_records(data: bytes, kind: str) -> list[tuple[str, str]]:
     if not entries:
         raise ValueError(f"source contains no {kind} rules")
     return entries
+
+
+def count_rejected_lsr_records(
+    data: bytes,
+    rejected_records: set[tuple[str, str]],
+) -> int:
+    count = 0
+    for raw_line in data.decode("utf-8-sig").splitlines():
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        fields = [field.strip() for field in line.split(",")]
+        if len(fields) >= 2 and (fields[0].upper(), fields[1].lower()) in rejected_records:
+            count += 1
+    return count
 
 
 def parse_lsr(data: bytes, kind: str) -> list[str]:
@@ -318,21 +425,33 @@ def mihomo_binary(directory: Path) -> Path:
     with urllib.request.urlopen(metadata_request, timeout=60) as response:
         release = json.load(response)
 
+    windows = platform.system() == "Windows"
+    prefix = "mihomo-windows-amd64-compatible-" if windows else "mihomo-linux-amd64-compatible-"
+    suffix = ".zip" if windows else ".gz"
     candidates = [
         asset
         for asset in release.get("assets", [])
-        if asset.get("name", "").startswith("mihomo-linux-amd64-compatible-")
-        and asset.get("name", "").endswith(".gz")
+        if asset.get("name", "").startswith(prefix)
+        and asset.get("name", "").endswith(suffix)
     ]
     if not candidates:
-        raise RuntimeError("no compatible Linux amd64 Mihomo release asset found")
+        raise RuntimeError(
+            f"no compatible {platform.system()} amd64 Mihomo release asset found"
+        )
 
-    archive = directory / "mihomo.gz"
-    binary = directory / "mihomo"
+    archive = directory / f"mihomo{suffix}"
+    binary = directory / ("mihomo.exe" if windows else "mihomo")
     archive.write_bytes(fetch(candidates[0]["browser_download_url"]))
-    with gzip.open(archive, "rb") as compressed, binary.open("wb") as output:
-        output.write(compressed.read())
-    binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    if windows:
+        with zipfile.ZipFile(archive) as compressed:
+            executables = [name for name in compressed.namelist() if name.endswith(".exe")]
+            if not executables:
+                raise RuntimeError("Mihomo archive did not contain an executable")
+            binary.write_bytes(compressed.read(executables[0]))
+    else:
+        with gzip.open(archive, "rb") as compressed, binary.open("wb") as output:
+            output.write(compressed.read())
+        binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
     return binary
 
 
@@ -344,31 +463,50 @@ def singbox_binary(directory: Path) -> Path:
     with urllib.request.urlopen(metadata_request, timeout=60) as response:
         release = json.load(response)
 
+    windows = platform.system() == "Windows"
+    archive_suffix = ".zip" if windows else ".tar.gz"
     assets = [
         asset
         for asset in release.get("assets", [])
         if asset.get("name", "").startswith("sing-box-")
-        and asset.get("name", "").endswith(".tar.gz")
+        and asset.get("name", "").endswith(archive_suffix)
     ]
     candidates = []
-    for suffix in ("-linux-amd64.tar.gz", "-linux-amd64-glibc.tar.gz", "-linux-amd64-musl.tar.gz"):
+    suffixes = (
+        ("-windows-amd64.zip",)
+        if windows
+        else (
+            "-linux-amd64.tar.gz",
+            "-linux-amd64-glibc.tar.gz",
+            "-linux-amd64-musl.tar.gz",
+        )
+    )
+    for suffix in suffixes:
         candidates = [asset for asset in assets if asset["name"].endswith(suffix)]
         if candidates:
             break
     if not candidates:
-        raise RuntimeError("no Linux amd64 Sing-box release asset found")
+        raise RuntimeError(
+            f"no {platform.system()} amd64 Sing-box release asset found"
+        )
 
-    archive = directory / "sing-box.tar.gz"
+    archive = directory / f"sing-box{archive_suffix}"
     extract_directory = directory / "sing-box"
     archive.write_bytes(fetch(candidates[0]["browser_download_url"]))
     extract_directory.mkdir()
-    with tarfile.open(archive, "r:gz") as compressed:
-        compressed.extractall(extract_directory, filter="data")
-    binaries = list(extract_directory.rglob("sing-box"))
+    if windows:
+        with zipfile.ZipFile(archive) as compressed:
+            compressed.extractall(extract_directory)
+    else:
+        with tarfile.open(archive, "r:gz") as compressed:
+            compressed.extractall(extract_directory, filter="data")
+    binary_name = "sing-box.exe" if windows else "sing-box"
+    binaries = list(extract_directory.rglob(binary_name))
     if not binaries:
         raise RuntimeError("Sing-box archive did not contain a binary")
     binary = binaries[0]
-    binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    if not windows:
+        binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
     return binary
 
 
@@ -378,6 +516,17 @@ def singbox_version(binary: Path) -> str:
         detail = (result.stderr or result.stdout).strip()
         raise RuntimeError(f"unable to query Sing-box version: {detail}")
     return (result.stdout or result.stderr).strip().splitlines()[0]
+
+
+def mihomo_version(binary: Path) -> str:
+    result = subprocess.run([str(binary), "-v"], capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"unable to query Mihomo version: {detail}")
+    fields = (result.stdout or result.stderr).strip().splitlines()[0].split()
+    if len(fields) < 3:
+        raise RuntimeError("unable to parse Mihomo version")
+    return " ".join(fields[:3])
 
 
 def convert(binary: Path, input_path: Path, output_path: Path, kind: str) -> None:
@@ -433,6 +582,28 @@ def decode_mrs(binary: Path, input_path: Path, output_path: Path, kind: str) -> 
         raise RuntimeError(f"{input_path.name}: converter produced an empty rule list")
 
 
+def verify_mrs(
+    binary: Path,
+    input_path: Path,
+    kind: str,
+    expected_records: list[tuple[str, str]],
+    workspace: Path,
+) -> None:
+    output_path = workspace / f"{input_path.name}.verified.txt"
+    decode_mrs(binary, input_path, output_path, kind)
+    actual = {
+        line.strip()
+        for line in output_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    expected = set(records_to_entries(expected_records))
+    if actual != expected:
+        raise RuntimeError(
+            f"{input_path.name}: generated MRS differs from its normalized source "
+            f"({len(actual)} decoded, {len(expected)} expected)"
+        )
+
+
 def mrs_domain_records(mihomo: Path, data: bytes, workspace: Path, stem: str) -> list[tuple[str, str]]:
     if data[:4] != MRS_MAGIC:
         raise RuntimeError(f"{stem}: source has an invalid MRS/Zstandard header")
@@ -455,6 +626,111 @@ def mrs_domain_records(mihomo: Path, data: bytes, workspace: Path, stem: str) ->
     if not records:
         raise RuntimeError(f"{stem}: source contains no domain rules")
     return records
+
+
+def download_domain_mrs(
+    mihomo: Path,
+    urls: tuple[str, ...],
+    workspace: Path,
+    stem: str,
+    minimum_rules: int,
+) -> tuple[bytes, str, list[tuple[str, str]]]:
+    failures: list[str] = []
+    for index, url in enumerate(urls):
+        try:
+            data = fetch(url)
+            records = mrs_domain_records(
+                mihomo,
+                data,
+                workspace,
+                f"{stem}-{index}",
+            )
+            if len(records) < minimum_rules:
+                raise RuntimeError(
+                    f"expected at least {minimum_rules} rules, received {len(records)}"
+                )
+            return data, url, records
+        except (OSError, RuntimeError, ValueError, urllib.error.URLError) as error:
+            failures.append(f"{url}: {error}")
+    raise RuntimeError("; ".join(failures))
+
+
+def telegram_official_networks() -> tuple[
+    list[ipaddress.IPv4Network | ipaddress.IPv6Network], bytes, str
+]:
+    data, used_url = download_first(TELEGRAM_OFFICIAL_CIDR_SOURCES)
+    try:
+        lines = data.decode("utf-8-sig").splitlines()
+    except UnicodeDecodeError as error:
+        raise RuntimeError(f"Telegram official CIDR list is not UTF-8: {error}") from error
+    networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+    for line_number, raw_line in enumerate(lines, 1):
+        value = raw_line.strip()
+        if not value:
+            continue
+        try:
+            networks.append(ipaddress.ip_network(value, strict=True))
+        except ValueError as error:
+            raise RuntimeError(
+                f"Telegram official CIDR line {line_number} is invalid: {value!r}"
+            ) from error
+    if len(networks) < 10 or not {network.version for network in networks} == {4, 6}:
+        raise RuntimeError("Telegram official CIDR list is unexpectedly small or not dual-stack")
+    return networks, data, used_url
+
+
+def validate_telegram_records(
+    name: str,
+    records: list[tuple[str, str]],
+    official_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network],
+) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+    networks = [ipaddress.ip_network(value, strict=True) for _, value in records]
+    outside = [
+        network
+        for network in networks
+        if not any(
+            network.version == official.version and network.subnet_of(official)
+            for official in official_networks
+        )
+    ]
+    if outside:
+        raise RuntimeError(f"{name}: CIDRs outside Telegram official ranges: {outside}")
+    return networks
+
+
+def write_artifact_manifest(
+    counts: dict[str, int],
+    mihomo: str,
+    singbox: str,
+) -> None:
+    rule_sets = {}
+    for name, specification in RULE_ARTIFACTS.items():
+        if name not in counts:
+            raise RuntimeError(f"missing generated rule count for {name}")
+        files = {}
+        for filename in specification["files"]:
+            artifact = ROOT / filename
+            if not artifact.is_file():
+                raise RuntimeError(f"missing generated artifact: {filename}")
+            data = artifact.read_bytes()
+            files[filename] = {
+                "size": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+            }
+        rule_sets[name] = {
+            "kind": specification["kind"],
+            "rules": counts[name],
+            "files": files,
+        }
+    manifest = {
+        "schema": 1,
+        "tools": {"mihomo": mihomo, "sing_box": singbox},
+        "rule_sets": rule_sets,
+    }
+    (ROOT / ".github/rule-artifacts.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def normalized_hostname(value: object) -> str | None:
@@ -908,6 +1184,28 @@ def decompile_srs(binary: Path, input_path: Path, output_path: Path) -> list[dic
     return rules
 
 
+def verify_srs(
+    binary: Path,
+    input_path: Path,
+    expected_rules: list[dict[str, list[str]]],
+    workspace: Path,
+) -> None:
+    actual_rules = decompile_srs(
+        binary,
+        input_path,
+        workspace / f"{input_path.name}.verified.json",
+    )
+    normalize = lambda rules: [
+        {
+            key: sorted(values) if isinstance(values, list) else values
+            for key, values in sorted(rule.items())
+        }
+        for rule in rules
+    ]
+    if normalize(actual_rules) != normalize(expected_rules):
+        raise RuntimeError(f"{input_path.name}: generated SRS differs from its source")
+
+
 def singbox_rule(domain: list[str] | None = None, domain_suffix: list[str] | None = None,
                  domain_keyword: list[str] | None = None, ip_cidr: list[str] | None = None) -> dict[str, list[str]]:
     rule: dict[str, list[str]] = {}
@@ -993,40 +1291,41 @@ def records_to_srs_rules(records: list[tuple[str, str]], kind: str) -> list[dict
     return [rule]
 
 
-def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> None:
-    data, used_url = download_first(NODESEEK_SOURCES)
-    if data[:4] != MRS_MAGIC:
-        raise RuntimeError("nodeseek.mrs: source has an invalid MRS/Zstandard header")
-
-    input_path = workspace / "nodeseek.mrs"
-    output_path = workspace / "nodeseek.txt"
-    input_path.write_bytes(data)
-    decode_mrs(binary, input_path, output_path, "domain")
-
-    decoded_lines = output_path.read_text(encoding="utf-8").splitlines()
-    entries = list(dict.fromkeys(line.strip() for line in decoded_lines if line.strip()))
-    if any(not DOMAIN_SET_ENTRY.fullmatch(entry) for entry in entries):
-        raise ValueError(
-            "nodeseek.mrs: source contains a rule unsupported by Egern domain-set YAML"
-        )
+def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> int:
+    data, used_url, records = download_domain_mrs(
+        binary,
+        NODESEEK_SOURCES,
+        workspace,
+        "nodeseek-source",
+        3,
+    )
+    entries = records_to_entries(records)
     yaml_text = "payload:\n" + "".join(f"  - {entry}\n" for entry in entries)
     temporary_output = workspace / "Nodeseek.yaml"
     temporary_output.write_text(yaml_text, encoding="utf-8")
-    temporary_output.replace(ROOT / "Nodeseek.yaml")
+    mrs_output = workspace / "Nodeseek.mrs"
+    mrs_output.write_bytes(data)
+    verify_mrs(binary, mrs_output, "domain", records, workspace)
     srs_output = workspace / "Nodeseek.srs"
+    expected_rules = [
+        singbox_rule(
+            domain=[entry for entry in entries if not entry.startswith("+.")],
+            domain_suffix=[entry[2:] for entry in entries if entry.startswith("+.")],
+        )
+    ]
     compile_srs(
         singbox,
-        [
-            singbox_rule(
-                domain=[entry for entry in entries if not entry.startswith("+.")],
-                domain_suffix=[entry[2:] for entry in entries if entry.startswith("+.")],
-            )
-        ],
+        expected_rules,
         srs_output,
     )
+    verify_srs(singbox, srs_output, expected_rules, workspace)
+    temporary_output.replace(ROOT / "Nodeseek.yaml")
+    mrs_output.replace(ROOT / "Nodeseek.mrs")
     srs_output.replace(ROOT / "Nodeseek.srs")
     print(f"Nodeseek.yaml: {len(entries)} rules from {used_url}")
+    print(f"Nodeseek.mrs: {len(entries)} rules from {used_url}")
     print(f"Nodeseek.srs: {len(entries)} rules from {used_url}")
+    return len(entries)
 
 
 def webrtc_entries(mihomo: Path, input_path: Path, output_path: Path) -> list[str]:
@@ -1043,7 +1342,7 @@ def webrtc_entries(mihomo: Path, input_path: Path, output_path: Path) -> list[st
     return entries
 
 
-def preserve_existing_webrtc(mihomo: Path, singbox: Path, workspace: Path, download_error: RuntimeError) -> None:
+def preserve_existing_webrtc(mihomo: Path, singbox: Path, workspace: Path, download_error: RuntimeError) -> int:
     existing_mrs = ROOT / "Webrtc_domain.mrs"
     existing_srs = ROOT / "Webrtc_domain.srs"
     if not existing_mrs.is_file() or existing_mrs.read_bytes()[:4] != MRS_MAGIC:
@@ -1073,35 +1372,42 @@ def preserve_existing_webrtc(mihomo: Path, singbox: Path, workspace: Path, downl
         f"WARNING: WebRTC sources are unavailable; preserving {len(entries)} validated existing rules: "
         f"{download_error}"
     )
+    return len(entries)
 
 
-def update_webrtc(mihomo: Path, singbox: Path, workspace: Path) -> None:
+def update_webrtc(mihomo: Path, singbox: Path, workspace: Path) -> int:
     try:
-        data, used_url = download_first(WEBRTC_SOURCES)
+        data, used_url, records = download_domain_mrs(
+            mihomo,
+            WEBRTC_SOURCES,
+            workspace,
+            "webrtc-source",
+            20,
+        )
     except RuntimeError as error:
-        preserve_existing_webrtc(mihomo, singbox, workspace, error)
-        return
-    if data[:4] != MRS_MAGIC:
-        raise RuntimeError("Webrtc_domain.mrs: source has an invalid MRS/Zstandard header")
+        return preserve_existing_webrtc(mihomo, singbox, workspace, error)
     input_path = workspace / "Webrtc_domain_source.mrs"
-    output_path = workspace / "Webrtc_domain_source.txt"
     input_path.write_bytes(data)
-    entries = webrtc_entries(mihomo, input_path, output_path)
+    entries = records_to_entries(records)
+    verify_mrs(mihomo, input_path, "domain", records, workspace)
     temporary_output = workspace / "Webrtc_domain.srs"
+    expected_rules = [
+        singbox_rule(
+            domain=[entry for entry in entries if not entry.startswith("+.")],
+            domain_suffix=[entry[2:] for entry in entries if entry.startswith("+.")],
+        )
+    ]
     compile_srs(
         singbox,
-        [
-            singbox_rule(
-                domain=[entry for entry in entries if not entry.startswith("+.")],
-                domain_suffix=[entry[2:] for entry in entries if entry.startswith("+.")],
-            )
-        ],
+        expected_rules,
         temporary_output,
     )
+    verify_srs(singbox, temporary_output, expected_rules, workspace)
     input_path.replace(ROOT / "Webrtc_domain.mrs")
     temporary_output.replace(ROOT / "Webrtc_domain.srs")
     print(f"Webrtc_domain.mrs: {len(entries)} rules from {used_url}")
     print(f"Webrtc_domain.srs: {len(entries)} rules from {used_url}")
+    return len(entries)
 
 
 def main() -> int:
@@ -1109,21 +1415,36 @@ def main() -> int:
         workspace = Path(temporary)
         binary = mihomo_binary(workspace)
         singbox = singbox_binary(workspace)
-        print(f"Using {singbox_version(singbox)}")
-        update_nodeseek(binary, singbox, workspace)
-        update_webrtc(binary, singbox, workspace)
+        current_mihomo_version = mihomo_version(binary)
+        current_singbox_version = singbox_version(singbox)
+        print(f"Using {current_mihomo_version}")
+        print(f"Using {current_singbox_version}")
+        counts = {
+            "NodeSeek": update_nodeseek(binary, singbox, workspace),
+            "WebRTC": update_webrtc(binary, singbox, workspace),
+        }
         speedtest_groups, mainland_speedtest_domains = speedtest_source_groups(binary, workspace)
-        source_cache: dict[tuple[str, str], tuple[bytes, str]] = {}
+        speedtest_data, speedtest_url = download_speedtest_source()
+        official_telegram, _, official_telegram_url = telegram_official_networks()
+        telegram_groups: dict[
+            str, list[ipaddress.IPv4Network | ipaddress.IPv6Network]
+        ] = {}
+        print(
+            f"Telegram official CIDR audit: {len(official_telegram)} dual-stack ranges; "
+            f"{official_telegram_url}"
+        )
         for source in SOURCES:
-            cache_key = (source["url"], source["fallback"])
-            if cache_key not in source_cache:
-                source_cache[cache_key] = (
-                    download_speedtest_source()
-                    if source["output"].startswith("SpeedtestInternational")
-                    else download_source(source)
+            if source["output"].startswith("SpeedtestInternational"):
+                data, used_url = speedtest_data, speedtest_url
+                records = parse_lsr_records(
+                    data,
+                    source["kind"],
+                    SPEEDTEST_REJECTED_RECORDS
+                    if source["kind"] == "domain"
+                    else None,
                 )
-            data, used_url = source_cache[cache_key]
-            records = parse_lsr_records(data, source["kind"])
+            else:
+                data, used_url, records = download_rule_source(source)
             if source["output"] == "SpeedtestInternational.mrs":
                 if len(records) < MIN_SPEEDTEST_DOMAIN_RECORDS:
                     raise RuntimeError(
@@ -1217,6 +1538,12 @@ def main() -> int:
                     f"Kelee Speedtest IP source shrank to {len(records)} rules; "
                     f"at least {MIN_SPEEDTEST_IP_RECORDS} are required"
                 )
+            if source["output"].startswith("Telegram"):
+                telegram_groups[source["output"]] = validate_telegram_records(
+                    source["output"],
+                    records,
+                    official_telegram,
+                )
             entries = records_to_entries(records)
             input_path = workspace / f"{source['output']}.txt"
             temporary_output = workspace / source["output"]
@@ -1224,18 +1551,33 @@ def main() -> int:
             convert(binary, input_path, temporary_output, source["kind"])
             if source["output"].startswith("SpeedtestInternational"):
                 compress_mrs_losslessly(temporary_output)
-            temporary_output.replace(ROOT / source["output"])
+            verify_mrs(binary, temporary_output, source["kind"], records, workspace)
             srs_output = workspace / source["srs_output"]
             srs_rules = records_to_srs_rules(records, source["kind"])
             compile_srs(singbox, srs_rules, srs_output)
             if source["srs_output"].startswith("SpeedtestInternational"):
                 compress_srs_losslessly(srs_output)
-                decompile_srs(
-                    singbox, srs_output, workspace / f"{source['srs_output']}.verified.json"
-                )
+            verify_srs(singbox, srs_output, srs_rules, workspace)
+            temporary_output.replace(ROOT / source["output"])
             srs_output.replace(ROOT / source["srs_output"])
             print(f"{source['output']}: {len(entries)} rules from {used_url}")
             print(f"{source['srs_output']}: {len(records)} Loon records from {used_url}")
+            counts[Path(source["output"]).stem] = len(records)
+        singapore = telegram_groups["TelegramSG.mrs"]
+        netherlands = telegram_groups["TelegramNL.mrs"]
+        overlap = [
+            (left, right)
+            for left in singapore
+            for right in netherlands
+            if left.version == right.version and left.overlaps(right)
+        ]
+        if overlap:
+            raise RuntimeError(f"Telegram SG/NL ranges overlap: {overlap}")
+        write_artifact_manifest(
+            counts,
+            current_mihomo_version,
+            current_singbox_version,
+        )
     return 0
 
 

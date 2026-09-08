@@ -35,12 +35,12 @@ jobs:
 
       - name: Commit updated rule files
         run: |
-          if ! git status --porcelain -- .github/speedtest-source-state.json Nodeseek.yaml Nodeseek.srs Webrtc_domain.mrs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs | grep -q .; then
+          if ! git status --porcelain -- .github/rule-artifacts.json .github/speedtest-source-state.json Nodeseek.yaml Nodeseek.mrs Nodeseek.srs Webrtc_domain.mrs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs | grep -q .; then
             echo "Generated rule files are already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/speedtest-source-state.json Nodeseek.yaml Nodeseek.srs Webrtc_domain.mrs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs
+          git add .github/rule-artifacts.json .github/speedtest-source-state.json Nodeseek.yaml Nodeseek.mrs Nodeseek.srs Webrtc_domain.mrs Webrtc_domain.srs SpeedtestInternational.mrs SpeedtestInternational.srs SpeedtestInternational_ipcidr.mrs SpeedtestInternational_ipcidr.srs TelegramSG.mrs TelegramSG.srs TelegramNL.mrs TelegramNL.srs
           git commit -m "chore: update generated rule files"
           git push

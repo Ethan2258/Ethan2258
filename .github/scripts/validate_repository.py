@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import sys
+import zlib
+from compression import zstd
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +16,29 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG_FILES = tuple(sorted(ROOT.glob("*.yaml")))
 MRS_MAGIC = bytes.fromhex("28b52ffd")
 SRS_MAGIC = b"SRS"
+MANIFEST_PATH = ROOT / ".github" / "rule-artifacts.json"
+EXPECTED_RULE_SETS = {
+    "NodeSeek": {"Nodeseek.yaml", "Nodeseek.mrs", "Nodeseek.srs"},
+    "WebRTC": {"Webrtc_domain.mrs", "Webrtc_domain.srs"},
+    "SpeedtestInternational": {
+        "SpeedtestInternational.mrs",
+        "SpeedtestInternational.srs",
+    },
+    "SpeedtestInternational_ipcidr": {
+        "SpeedtestInternational_ipcidr.mrs",
+        "SpeedtestInternational_ipcidr.srs",
+    },
+    "TelegramSG": {"TelegramSG.mrs", "TelegramSG.srs"},
+    "TelegramNL": {"TelegramNL.mrs", "TelegramNL.srs"},
+}
+EXPECTED_RULE_KINDS = {
+    "NodeSeek": "domain",
+    "WebRTC": "domain",
+    "SpeedtestInternational": "domain",
+    "SpeedtestInternational_ipcidr": "ipcidr",
+    "TelegramSG": "ipcidr",
+    "TelegramNL": "ipcidr",
+}
 REPOSITORY_URL = re.compile(
     r"https://(?:cdn|fastly|gcore)\.jsdelivr\.net/gh/Ethan2258/Ethan2258@main/"
     r"(?P<path>[^\"'\s]+)",
@@ -125,6 +152,14 @@ def validate_mrs_files(errors: list[str]) -> None:
             continue
         if path.read_bytes()[:4] != MRS_MAGIC:
             errors.append(f"{relative(path)}: invalid MRS/Zstandard header")
+            continue
+        try:
+            payload = zstd.decompress(path.read_bytes())
+        except Exception as error:
+            errors.append(f"{relative(path)}: invalid MRS/Zstandard stream: {error}")
+            continue
+        if not payload:
+            errors.append(f"{relative(path)}: empty MRS payload")
 
 
 def validate_srs_files(errors: list[str]) -> None:
@@ -132,8 +167,93 @@ def validate_srs_files(errors: list[str]) -> None:
         if path.stat().st_size <= len(SRS_MAGIC):
             errors.append(f"{relative(path)}: file is empty or truncated")
             continue
-        if path.read_bytes()[:3] != SRS_MAGIC:
+        data = path.read_bytes()
+        if data[:3] != SRS_MAGIC:
             errors.append(f"{relative(path)}: invalid Sing-box SRS header")
+            continue
+        if data[3] == 0:
+            errors.append(f"{relative(path)}: invalid Sing-box SRS version")
+            continue
+        try:
+            payload = zlib.decompress(data[4:])
+        except zlib.error as error:
+            errors.append(f"{relative(path)}: invalid Sing-box SRS stream: {error}")
+            continue
+        if not payload:
+            errors.append(f"{relative(path)}: empty Sing-box SRS payload")
+
+
+def validate_artifact_manifest(errors: list[str]) -> None:
+    try:
+        manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        errors.append(f"{relative(MANIFEST_PATH)}: {error}")
+        return
+    if not isinstance(manifest, dict) or manifest.get("schema") != 1:
+        errors.append(f"{relative(MANIFEST_PATH)}: expected manifest schema 1")
+        return
+    tools = manifest.get("tools")
+    if not isinstance(tools, dict) or not all(
+        isinstance(tools.get(name), str) and tools[name]
+        for name in ("mihomo", "sing_box")
+    ):
+        errors.append(f"{relative(MANIFEST_PATH)}: missing compiler versions")
+    rule_sets = manifest.get("rule_sets")
+    if not isinstance(rule_sets, dict) or set(rule_sets) != set(EXPECTED_RULE_SETS):
+        errors.append(f"{relative(MANIFEST_PATH)}: unexpected rule-set inventory")
+        return
+    manifest_files: set[str] = set()
+    for name, expected_files in EXPECTED_RULE_SETS.items():
+        entry = rule_sets[name]
+        if (
+            not isinstance(entry, dict)
+            or type(entry.get("rules")) is not int
+            or entry["rules"] <= 0
+        ):
+            errors.append(f"{relative(MANIFEST_PATH)}: invalid rule count for {name}")
+            continue
+        if entry.get("kind") != EXPECTED_RULE_KINDS[name]:
+            errors.append(f"{relative(MANIFEST_PATH)}: invalid rule kind for {name}")
+        files = entry.get("files")
+        if not isinstance(files, dict) or set(files) != expected_files:
+            errors.append(f"{relative(MANIFEST_PATH)}: invalid file inventory for {name}")
+            continue
+        manifest_files.update(files)
+        for filename, metadata in files.items():
+            artifact = ROOT / filename
+            if not artifact.is_file():
+                errors.append(f"{filename}: missing artifact")
+                continue
+            data = artifact.read_bytes()
+            expected_size = metadata.get("size") if isinstance(metadata, dict) else None
+            expected_hash = metadata.get("sha256") if isinstance(metadata, dict) else None
+            if expected_size != len(data):
+                errors.append(f"{filename}: size does not match artifact manifest")
+            if expected_hash != hashlib.sha256(data).hexdigest():
+                errors.append(f"{filename}: SHA-256 does not match artifact manifest")
+    binary_files = {
+        path.name
+        for pattern in ("*.mrs", "*.srs")
+        for path in ROOT.glob(pattern)
+    }
+    manifest_binary_files = {
+        filename
+        for filename in manifest_files
+        if Path(filename).suffix in {".mrs", ".srs"}
+    }
+    if binary_files != manifest_binary_files:
+        unexpected = sorted(binary_files - manifest_binary_files)
+        missing = sorted(manifest_binary_files - binary_files)
+        if unexpected:
+            errors.append(
+                f"{relative(MANIFEST_PATH)}: unlisted binary artifacts: "
+                f"{', '.join(unexpected)}"
+            )
+        if missing:
+            errors.append(
+                f"{relative(MANIFEST_PATH)}: listed binary artifacts are missing: "
+                f"{', '.join(missing)}"
+            )
 
 
 def main() -> int:
@@ -154,6 +274,7 @@ def main() -> int:
         validate_repository_urls(path, errors)
     validate_mrs_files(errors)
     validate_srs_files(errors)
+    validate_artifact_manifest(errors)
 
     if errors:
         print("Repository validation failed:", file=sys.stderr)
