@@ -7,19 +7,19 @@
   "rule_sets": {
     "NodeSeek": {
       "kind": "domain",
-      "rules": 6,
+      "rules": 7,
       "files": {
         "Nodeseek.yaml": {
-          "size": 127,
-          "sha256": "20f2b473634033137466d01c36be0a1dc05f7fa7792b4b6b3350197b9759076c"
+          "size": 146,
+          "sha256": "7d7cf2811fde7a18c11d67ec42abeb6a2fd5d34c0a92eaa3f7ff985437f8f77c"
         },
         "Nodeseek.mrs": {
-          "size": 134,
-          "sha256": "74371b7347075f9196949abfa4e94f5a1e8037863cf3711d80a30180978af414"
+          "size": 144,
+          "sha256": "13d115f9aa430a4e2af9fd983376c2a04e15495ca041a17c2e2bf9c39ab1b25d"
         },
         "Nodeseek.srs": {
-          "size": 110,
-          "sha256": "d6c421e43dfe33afee32b703a95dd570d7647efe0289c1dfee994915ec01323f"
+          "size": 122,
+          "sha256": "464f4e0334aa4f336c9e1bb62d98359047cd7d258d17bfee09acd243a3224c9c"
         }
       }
     },
