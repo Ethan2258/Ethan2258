@@ -39,15 +39,15 @@
     },
     "SpeedtestInternational": {
       "kind": "domain",
-      "rules": 18481,
+      "rules": 18457,
       "files": {
         "SpeedtestInternational.mrs": {
-          "size": 172550,
-          "sha256": "1664107a6953f79a6cdcc54527910b8db63c5383b5586f0d1cf93f7e2aedd76c"
+          "size": 172573,
+          "sha256": "239a838078a9aea4af49b8517e62a30c0c130b138186c539123c73b99969c892"
         },
         "SpeedtestInternational.srs": {
-          "size": 157531,
-          "sha256": "6385dcd6ac529f473ac0f8c84e23e56b27c17c4c40d4922e303906e294c78c9d"
+          "size": 157329,
+          "sha256": "b933c373777f46bc3b5b3cab9bbebf3889204c2715e1ec6af2127fd3244fa31f"
         }
       }
     },
