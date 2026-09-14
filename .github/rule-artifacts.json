@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "tools": {
-    "mihomo": "Mihomo Meta v1.19.30",
+    "mihomo": "Mihomo Meta v1.19.31",
     "sing_box": "sing-box version 1.14.0"
   },
   "rule_sets": {
@@ -39,15 +39,15 @@
     },
     "SpeedtestInternational": {
       "kind": "domain",
-      "rules": 18474,
+      "rules": 18477,
       "files": {
         "SpeedtestInternational.mrs": {
-          "size": 172580,
-          "sha256": "f76847be5f341541fe2df4f8f640bef85307420f959b3c832d97aad26c283d05"
+          "size": 172713,
+          "sha256": "1c62174a922b7c0791498b781c9bdbd732576d36e054cc54aa5f43538330e3dc"
         },
         "SpeedtestInternational.srs": {
-          "size": 157512,
-          "sha256": "24243fc80910dee257dfc92671cf2435824cb0049742dca6805a535aadda2de0"
+          "size": 157447,
+          "sha256": "a967763747e913166e464a4b132c9d752df28ae6b0ddedfe16a548226c6119fe"
         }
       }
     },
