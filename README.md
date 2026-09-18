@@ -74,6 +74,18 @@ rules:
 
 在路由规则中引用对应 `tag` 并选择目标出站即可。
 
+## Egern
+
+```yaml
+rules:
+  - rule_set:
+      match: https://raw.githubusercontent.com/Ethan2258/Ethan2258/main/Nodeseek.yaml
+      policy: DIRECT
+      update_interval: 10800
+```
+
+在规则列表或配置中引用对应 `rule_set` 并指定目标策略（如 `DIRECT` 或 `PROXY`）即可。
+
 ## 更新与质量
 
 - 每 3 小时检查一次上游，也支持[手动运行](https://github.com/Ethan2258/Ethan2258/actions/workflows/update-mihomo-rules.yml)。

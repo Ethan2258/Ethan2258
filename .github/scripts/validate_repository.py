@@ -128,21 +128,24 @@ def validate_repository_urls(path: Path, errors: list[str]) -> None:
 
 
 def validate_domain_set(path: Path, config: Any, errors: list[str]) -> None:
-    if not isinstance(config, dict) or set(config) != {"payload"}:
-        errors.append(f"{relative(path)}: expected only a top-level payload key")
+    valid_keys = {"domain_suffix_set", "domain_set", "domain_keyword_set", "domain_regex_set"}
+    if not isinstance(config, dict) or not set(config).issubset(valid_keys) or not set(config):
+        errors.append(
+            f"{relative(path)}: expected only valid Egern domain set keys ({', '.join(sorted(valid_keys))})"
+        )
         return
 
-    payload = config["payload"]
-    if not isinstance(payload, list) or not payload:
-        errors.append(f"{relative(path)}: payload must be a non-empty list")
-        return
-    invalid_entries = [
-        entry for entry in payload if not isinstance(entry, str) or not entry
-    ]
-    if invalid_entries:
-        errors.append(f"{relative(path)}: payload entries must be non-empty strings")
-    elif len(payload) != len(set(payload)):
-        errors.append(f"{relative(path)}: payload contains duplicate entries")
+    for key, items in config.items():
+        if not isinstance(items, list) or not items:
+            errors.append(f"{relative(path)}: {key} must be a non-empty list")
+            continue
+        invalid_entries = [
+            entry for entry in items if not isinstance(entry, str) or not entry
+        ]
+        if invalid_entries:
+            errors.append(f"{relative(path)}: {key} entries must be non-empty strings")
+        elif len(items) != len(set(items)):
+            errors.append(f"{relative(path)}: {key} contains duplicate entries")
 
 
 def validate_mrs_files(errors: list[str]) -> None:

@@ -1296,6 +1296,19 @@ def records_to_srs_rules(records: list[tuple[str, str]], kind: str) -> list[dict
     return [rule]
 
 
+def records_to_egern_yaml(records: list[tuple[str, str]]) -> str:
+    domain_suffixes = [val for r_type, val in records if r_type in {"DOMAIN-SUFFIX", "HOST-SUFFIX"}]
+    domains = [val for r_type, val in records if r_type in {"DOMAIN", "HOST"}]
+    lines: list[str] = []
+    if domain_suffixes:
+        lines.append("domain_suffix_set:")
+        lines.extend(f"  - {item}" for item in sorted(set(domain_suffixes)))
+    if domains:
+        lines.append("domain_set:")
+        lines.extend(f"  - {item}" for item in sorted(set(domains)))
+    return "\n".join(lines) + "\n"
+
+
 def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> int:
     data, used_url, records = download_domain_mrs(
         binary,
@@ -1305,7 +1318,7 @@ def update_nodeseek(binary: Path, singbox: Path, workspace: Path) -> int:
         3,
     )
     entries = records_to_entries(records)
-    yaml_text = "payload:\n" + "".join(f"  - {entry}\n" for entry in entries)
+    yaml_text = records_to_egern_yaml(records)
     temporary_output = workspace / "Nodeseek.yaml"
     temporary_output.write_bytes(yaml_text.encode("utf-8"))
     mrs_output = workspace / "Nodeseek.mrs"
