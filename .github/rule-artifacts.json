@@ -43,11 +43,11 @@
       "files": {
         "SpeedtestInternational.mrs": {
           "size": 172750,
-          "sha256": "8ef35def7c7bcb5c298901a3935283ef6c780677a1a19d758d244120f782ff94"
+          "sha256": "ad932dc09e593ebfba7d91d3f73aee8f0aaeb9246a166365e35ff578e8e250ef"
         },
         "SpeedtestInternational.srs": {
-          "size": 157494,
-          "sha256": "2c76f3355e910d099f381e1685f1b5440ed130647f9186f9563b4f923cf7931d"
+          "size": 157613,
+          "sha256": "432ff5e0103e0252f638e0c96e8ba7f23b550d1f49a0ffc3fc3da1f2a36198a1"
         }
       }
     },
