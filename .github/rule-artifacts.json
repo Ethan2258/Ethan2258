@@ -37,34 +37,6 @@
         }
       }
     },
-    "SpeedtestInternational": {
-      "kind": "domain",
-      "rules": 18497,
-      "files": {
-        "SpeedtestInternational.mrs": {
-          "size": 173004,
-          "sha256": "c0987fe4367c3e7b6089a0ec54031cbc259fda78ee234091754c4ccf6544a908"
-        },
-        "SpeedtestInternational.srs": {
-          "size": 157727,
-          "sha256": "1362369fbe4b5e3c26bf248520c3c00544ca5f7939db5578cfcfa818b74d4acc"
-        }
-      }
-    },
-    "SpeedtestInternational_ipcidr": {
-      "kind": "ipcidr",
-      "rules": 9,
-      "files": {
-        "SpeedtestInternational_ipcidr.mrs": {
-          "size": 71,
-          "sha256": "67de97022ef2318c7913f95a82d33e39b3b95f5fd3924db3cfa0bb6e0959c55b"
-        },
-        "SpeedtestInternational_ipcidr.srs": {
-          "size": 60,
-          "sha256": "78f238785b28676df5a94a67edcf7916cfbab844a7dabb75a0a971365f231674"
-        }
-      }
-    },
     "TelegramSG": {
       "kind": "ipcidr",
       "rules": 3,

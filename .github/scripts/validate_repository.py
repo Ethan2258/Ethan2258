@@ -20,22 +20,12 @@ MANIFEST_PATH = ROOT / ".github" / "rule-artifacts.json"
 EXPECTED_RULE_SETS = {
     "NodeSeek": {"Nodeseek.yaml", "Nodeseek.mrs", "Nodeseek.srs"},
     "WebRTC": {"Webrtc_domain.mrs", "Webrtc_domain.srs"},
-    "SpeedtestInternational": {
-        "SpeedtestInternational.mrs",
-        "SpeedtestInternational.srs",
-    },
-    "SpeedtestInternational_ipcidr": {
-        "SpeedtestInternational_ipcidr.mrs",
-        "SpeedtestInternational_ipcidr.srs",
-    },
     "TelegramSG": {"TelegramSG.mrs", "TelegramSG.srs"},
     "TelegramNL": {"TelegramNL.mrs", "TelegramNL.srs"},
 }
 EXPECTED_RULE_KINDS = {
     "NodeSeek": "domain",
     "WebRTC": "domain",
-    "SpeedtestInternational": "domain",
-    "SpeedtestInternational_ipcidr": "ipcidr",
     "TelegramSG": "ipcidr",
     "TelegramNL": "ipcidr",
 }
