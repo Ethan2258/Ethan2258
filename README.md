@@ -1,4 +1,4 @@
-### 你好，我是 ZHENG YI HENG 👋
+### 你好，我是 Ethan 👋
 
 在 GitHub 上边做边学，遇到喜欢的项目会点个 Star。
 
