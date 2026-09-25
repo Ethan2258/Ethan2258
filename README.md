@@ -9,4 +9,6 @@ Learning on GitHub. Star items I like.
 
 **Achievements**
 
-<a href="https://github.com/Ethan2258?tab=achievements"><img src="assets/yolo.png" alt="YOLO" title="YOLO：未经审查就合并了 Pull Request" width="64"></a>
+<!-- achievements:start -->
+<a href="https://github.com/Ethan2258?tab=achievements&achievement=yolo"><img src="assets/achievements/yolo.png" alt="YOLO" title="YOLO" width="64"></a>
+<!-- achievements:end -->
