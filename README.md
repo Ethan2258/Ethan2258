@@ -10,6 +10,7 @@
 **成就**
 
 <!-- achievements:start -->
+<a href="https://github.com/Ethan2258?tab=achievements&achievement=pull-shark"><img src="assets/achievements/pull-shark.png" alt="Pull Shark x2" title="Pull Shark x2" width="64"></a><sup>x2</sup>
 <a href="https://github.com/Ethan2258?tab=achievements&achievement=quickdraw"><img src="assets/achievements/quickdraw.png" alt="Quickdraw" title="Quickdraw" width="64"></a>
 <a href="https://github.com/Ethan2258?tab=achievements&achievement=yolo"><img src="assets/achievements/yolo.png" alt="YOLO" title="YOLO" width="64"></a>
 <!-- achievements:end -->
